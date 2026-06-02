@@ -40,7 +40,7 @@ export default function Home() {
   const [tokens, setTokens] = useState<any[]>([]);
   const [tokenAtivo, setTokenAtivo] = useState("");
   const [novoTokenGerado, setNovoTokenGerado] = useState("");
-  const [sistemaNukado, setSistemaNukado] = useState(false); 
+  const [sistemaNukado, setSistemaNukado] = useState(false);
 
   // FUNÇÕES WRAPPERS LOCAIS QUE ALIMENTAM AS FUNÇÕES EXTERNAS
   const carregarTokensDoBanco = async () => {
@@ -204,7 +204,9 @@ export default function Home() {
         {activeTab === "create_script" && (
           <CreateScriptTab tokenAtivo={tokenAtivo} />
         )}
-        {activeTab === "logs" && <LogsTab logs={logs} />}
+        {activeTab === "logs" && (
+          <LogsTab logs={logs} tokenAtivo={tokenAtivo} />
+        )}
         {activeTab === "tokens" && (
           <TokensTab
             tokens={tokens}
