@@ -42,7 +42,7 @@ export function LiveTerminal({ output, tokenAtivo }: TerminalProps) {
 
         {/* Output do Script */}
         <div className="relative z-10 whitespace-pre-wrap font-mono break-all tracking-normal">
-          {output ? (
+          {output && tokenAtivo ? (
             <div className="text-emerald-400/90 filter drop-shadow-[0_0_2px_rgba(52,211,153,0.2)]">
               {output}
             </div>
@@ -57,15 +57,24 @@ export function LiveTerminal({ output, tokenAtivo }: TerminalProps) {
                 <span className="text-indigo-400">isyone@ops-central</span>:
                 <span className="text-purple-400">~</span>$ ./listen_pipeline.sh
               </p>
-              {tokenAtivo && (
+              {tokenAtivo ? (
                 <p className="text-zinc-600 mt-1">
                   <span className="text-emerald-500/50">✔</span> Loaded
                   X-Isy-Token: {tokenAtivo.substring(0, 12)}********
                 </p>
+              ) : (
+                <p className="text-rose-500/80 mt-1 flex items-center gap-1.5">
+                  <span className="text-rose-500 font-bold text-xs">✖</span>{" "}
+                  NENHUM TOKEN ATIVO. ACESSO NEGADO.
+                </p>
               )}
               <p className="text-zinc-600 animate-pulse text-[11px] mt-2 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-ping" />
-                sys:: awaiting script execution trigger...
+                <span
+                  className={`w-1.5 h-1.5 rounded-full animate-ping ${tokenAtivo ? "bg-zinc-600" : "bg-rose-600"}`}
+                />
+                {tokenAtivo
+                  ? "sys:: awaiting script execution trigger..."
+                  : "sys:: auth required to establish connection..."}
               </p>
             </div>
           )}

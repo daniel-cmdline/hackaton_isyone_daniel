@@ -14,6 +14,11 @@ import { DocsTab } from "@/components/DocsTab";
 import { WebhookTab } from "@/components/WebhookTab";
 import { PanicTab } from "@/components/PanicTab";
 import { AboutTab } from "@/components/AboutTab";
+import { carregarTokensDoBanco as fetchTokens } from "./functions/carregarTokensDoBanco";
+import { carregarLogs as fetchLogs } from "./functions/carregarLogs";
+import { dispararScript as execScript } from "./functions/dispararScript";
+import { gerarNovoIsyToken as createToken } from "./functions/gerarNovoIsyToken";
+import { deletarToken as removeToken } from "./functions/deletarToken";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -35,113 +40,34 @@ export default function Home() {
   const [tokens, setTokens] = useState<any[]>([]);
   const [tokenAtivo, setTokenAtivo] = useState("");
   const [novoTokenGerado, setNovoTokenGerado] = useState("");
-  const [sistemaNukado, setSistemaNukado] = useState(false); // 💀 Flag global
+  const [sistemaNukado, setSistemaNukado] = useState(false); 
 
+  // FUNÇÕES WRAPPERS LOCAIS QUE ALIMENTAM AS FUNÇÕES EXTERNAS
   const carregarTokensDoBanco = async () => {
-    try {
-      const res = await fetch("/api/tokens", { method: "GET" });
-      if (!res.ok) return;
-      const data = await res.json();
-
-      if (data.success) {
-        if (data.data && data.data.length > 0) {
-          setTokens(data.data);
-          setTokenAtivo(data.data[0].token);
-        } else {
-          setTokens([]);
-          setTokenAtivo("");
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    await fetchTokens(setTokens, setTokenAtivo);
   };
 
   const carregarLogs = async () => {
-    if (!tokenAtivo || sistemaNukado) return;
-    try {
-      const res = await fetch("/api/logs", {
-        method: "GET",
-        headers: { "X-Isy-Token": tokenAtivo },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.success) setLogs(data.data);
-    } catch (err) {
-      console.error(err);
-    }
+    await fetchLogs(tokenAtivo, sistemaNukado, setLogs);
   };
 
   const dispararScript = async (scriptName: string) => {
-    if (!tokenAtivo) return;
-    setLoading(true);
-
-    // Feedback imediato no terminal antes mesmo da rede responder
-    const feedbackInicial = `> INJECTING PAYLOAD: ${scriptName}\n> AUTH_HEADER: X-Isy-Token = ${tokenAtivo.substring(0, 12)}********\n> DISPATCHING TO KERNEL...\n------------------------------------------------------\n`;
-    setOutput(feedbackInicial + `\n⏳ Aguardando retorno de stdout...\n`);
-
-    try {
-      const res = await fetch("/api/execute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Isy-Token": tokenAtivo,
-        },
-        body: JSON.stringify({
-          scriptName,
-          args: ["--interface-web", session?.user?.name || "Admin"],
-        }),
-      });
-      if (!res.ok) {
-        setLoading(false);
-        setOutput(
-          feedbackInicial +
-            `[ERRO HTTP] Falha na comunicação com o servidor (Status: ${res.status})`,
-        );
-        return;
-      }
-      const data = await res.json();
-      setOutput(
-        feedbackInicial + (data.success ? data.output : `[ERRO] ${data.error}`),
-      );
-      carregarLogs();
-    } catch (err: any) {
-      setOutput(feedbackInicial + `[ERRO DE REDE] ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+    await execScript(
+      scriptName,
+      tokenAtivo,
+      session?.user?.name || "Admin",
+      setLoading,
+      setOutput,
+      carregarLogs,
+    );
   };
 
   const gerarNovoIsyToken = async () => {
-    try {
-      const nomeToken = `Chave_Ops_${tokens.length + 1}`;
-      const res = await fetch("/api/tokens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: nomeToken }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setNovoTokenGerado(data.data.token);
-          await carregarTokensDoBanco();
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    await createToken(tokens.length, setNovoTokenGerado, carregarTokensDoBanco);
   };
 
   const deletarToken = async (tokenString: string) => {
-    try {
-      const res = await fetch(`/api/tokens?token=${tokenString}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) await carregarTokensDoBanco();
-    } catch (err) {
-      console.error(err);
-    }
+    await removeToken(tokenString, carregarTokensDoBanco);
   };
 
   // 1. Ciclo de inicialização dos Tokens (Garante que roda assim que o usuário loga)
@@ -150,6 +76,11 @@ export default function Home() {
       carregarTokensDoBanco();
     }
   }, [session, sistemaNukado]);
+
+  // Limpa o output do terminal sempre que a credencial (token ativo) mudar
+  useEffect(() => {
+    setOutput("");
+  }, [tokenAtivo]);
 
   // 2. Polling de Logs Ajustado (Monitorea o tokenAtivo e a session de forma estável)
   useEffect(() => {
