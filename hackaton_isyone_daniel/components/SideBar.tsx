@@ -4,9 +4,9 @@
 import { signOut } from "next-auth/react";
 
 interface SidebarProps {
-  activeTab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic";
+  activeTab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic" | "about";
   setActiveTab: (
-    tab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic",
+    tab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic" | "about",
   ) => void;
   user: {
     name?: string | null;
@@ -138,7 +138,6 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             <span className="text-[9px] text-zinc-700 font-normal">MAN_8</span>
           </button>
 
-          {/* 🚨 ABA [08]: BOTÃO DE PÂNICO MONSTRO INTEGRADO AQUI */}
           <button
             onClick={() => setActiveTab("panic")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
@@ -151,6 +150,21 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
               <span className="text-[10px]">{activeTab === "panic" ? "☣" : "▪"}</span> [08] PANIC_TRIGGER
             </span>
             <span className="text-[9px] text-red-950 font-bold bg-red-500/10 border border-red-500/20 px-1 rounded">CRIT_0</span>
+          </button>
+
+          {/* 💻 MÁGICA CONCLUÍDA: ABA [09] COMPACTADA COM SUCESSO AQUI */}
+          <button
+            onClick={() => setActiveTab("about")}
+            className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
+              activeTab === "about"
+                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className="text-[10px]">{activeTab === "about" ? "➔" : "▪"}</span> [09] SYS_ADM_ROOT
+            </span>
+            <span className="text-[9px] text-zinc-700 font-normal">ROOT_OP</span>
           </button>
         </nav>
 
@@ -172,13 +186,13 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
       <div className="border-t border-zinc-900 pt-3 flex flex-col gap-2.5">
         <div className="bg-zinc-950 border border-zinc-900 p-2 flex items-center gap-2.5">
           <div className="w-7 h-7 bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-emerald-400 text-xs">
-            {user.name?.charAt(0) || "X"}
+            {user.name?.charAt(0) || "D"}
           </div>
           <div className="overflow-hidden leading-none">
             <p className="text-[11px] font-bold text-zinc-300 truncate">
-              {user.name ? `OP_${user.name.toUpperCase().replace(/\s+/g, '_')}` : "OP_ROOT"}
+              {user.name ? `OP_${user.name.toUpperCase().replace(/\s+/g, '_')}` : "OP_DANIEL"}
             </p>
-            <p className="text-[9px] text-zinc-600 truncate mt-1 font-sans">{user.email}</p>
+            <p className="text-[9px] text-zinc-600 truncate mt-1 font-sans">{user.email || "daniel.caesar@admin.node"}</p>
           </div>
         </div>
         <button
