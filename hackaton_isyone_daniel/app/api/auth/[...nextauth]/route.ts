@@ -1,0 +1,20 @@
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+
+const handler = NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async signIn({ user }) {
+      return true; // Permite que qualquer usuário autenticado possa acessar a aplicação
+    },
+  },
+});
+
+export { handler as GET, handler as POST };
