@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import path from "path";
 import { db } from "@/db/pool";
+// 📥 Importando a sua função dedicada de Webhook
+import { enviarParaDiscord } from "@/app/utils/enviarParaDiscord";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +32,10 @@ export async function POST(req: NextRequest) {
     }
 
     const tokenValido = rows[0];
+    // Extrai o operador dono do token para auditar no log e no Discord
+    const operadorNome =
+      tokenValido.user_email ||
+      `Painel (Token: ${tokenEnviado.substring(0, 12)}...)`;
 
     // 2. Executa o Script
     const { scriptName, args } = await req.json();
@@ -77,7 +83,9 @@ ${"\u001b[31m"}[PROCESS TERMINATED WITH EXIT CODE 139]${"\u001b[0m"}
         console.error(dbErr);
       }
 
-      // Retorna 200 OK para que o frontend atualize os logs, mas enviando success = false
+      // 🔥 DISPARO NATIVO DO DISCORD (FALHA FORÇADA)
+      enviarParaDiscord(scriptName, "FAILED", operadorNome, outputErro);
+
       return NextResponse.json({
         success: false,
         error: outputErro,
@@ -91,7 +99,6 @@ ${"\u001b[31m"}[PROCESS TERMINATED WITH EXIT CODE 139]${"\u001b[0m"}
     try {
       const { execSync } = require("child_process");
       execSync(`chmod +x "${caminhoScript}"`);
-      // Se o arquivo já tiver permissão, ele não faz nada. Se não tiver, ele resolve o B.O. em 1 milissegundo.
     } catch (permErr) {
       console.error("⚠️ Falha ao tentar forçar chmod automágico:", permErr);
     }
@@ -120,6 +127,14 @@ ${"\u001b[31m"}[PROCESS TERMINATED WITH EXIT CODE 139]${"\u001b[0m"}
           } catch (dbErr) {
             console.error(dbErr);
           }
+
+          // 🔥 DISPARO NATIVO DO DISCORD (EXECUÇÃO REAL)
+          enviarParaDiscord(
+            scriptName,
+            statusFinal,
+            operadorNome,
+            outputCompleto,
+          );
 
           resolve({ success: !error, output: outputCompleto });
         },

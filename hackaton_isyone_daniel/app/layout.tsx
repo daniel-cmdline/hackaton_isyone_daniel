@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { AuthProvider } from "@/components/AuthProvider";
-import { HackerRadio } from "@/components/HackerRadio"; // 🟢 Importa o player aqui
+import { HackerRadio } from "@/components/HackerRadio"; // 
 import "./globals.css";
 
 export const metadata: Metadata = {

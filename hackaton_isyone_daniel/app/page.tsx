@@ -3,7 +3,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { Sidebar } from "@/components/SideBar";
+import { Sidebar } from "@/components/SideBar"; 
 import { ScriptsTab } from "@/components/ScriptsTab";
 import { TokensTab } from "@/components/TokensTab";
 import { LogsTab } from "@/components/LogsTab";
@@ -11,87 +11,62 @@ import { CreateScriptTab } from "@/components/CreateScriptTab";
 import { FrontPage } from "@/components/FrontPage";
 import { WelcomeCard } from "@/components/Home";
 import { DocsTab } from "@/components/DocsTab";
+import { WebhookTab } from "@/components/WebhookTab";
+import { PanicTab } from "@/components/PanicTab";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<
-    "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs"
+    | "home"
+    | "scripts"
+    | "tokens"
+    | "logs"
+    | "create_script"
+    | "docs"
+    | "webhook"
+    | "panic"
   >("home");
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
   const [logs, setLogs] = useState<any[]>([]);
 
-  // ⚡ Gerenciamento Dinâmico de Tokens de Banco
   const [tokens, setTokens] = useState<any[]>([]);
   const [tokenAtivo, setTokenAtivo] = useState("");
   const [novoTokenGerado, setNovoTokenGerado] = useState("");
+  const [sistemaNukado, setSistemaNukado] = useState(false); // 💀 Flag global
 
-  // Busca chaves reais do banco cadastradas para o usuário
   const carregarTokensDoBanco = async () => {
     try {
       const res = await fetch("/api/tokens", { method: "GET" });
-
-      if (!res.ok) {
-        const txtErro = await res.text();
-        console.error(
-          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/tokens:`,
-          txtErro,
-        );
-        return;
-      }
-
+      if (!res.ok) return;
       const data = await res.json();
       if (data.success && data.data && data.data.length > 0) {
         setTokens(data.data);
         setTokenAtivo(data.data[0].token);
-        console.log(
-          "[ISY-DEBUG] Token ativo configurado com sucesso:",
-          data.data[0].token,
-        );
-      } else {
-        console.warn(
-          "[ISY-DEBUG] Resposta de tokens vazia ou malformada:",
-          data,
-        );
       }
     } catch (err) {
-      console.error("[ISY-DEBUG] Falha de rede ao buscar /api/tokens:", err);
+      console.error(err);
     }
   };
 
   const carregarLogs = async () => {
-    if (!tokenAtivo) return;
+    if (!tokenAtivo || sistemaNukado) return;
     try {
       const res = await fetch("/api/logs", {
         method: "GET",
         headers: { "X-Isy-Token": tokenAtivo },
       });
-
-      if (!res.ok) {
-        const txtErro = await res.text();
-        console.error(
-          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/logs:`,
-          txtErro,
-        );
-        return;
-      }
-
+      if (!res.ok) return;
       const data = await res.json();
       if (data.success) setLogs(data.data);
     } catch (err) {
-      console.error("[ISY-DEBUG] Falha de rede ao buscar /api/logs:", err);
+      console.error(err);
     }
   };
 
   const dispararScript = async (scriptName: string) => {
-    if (!tokenAtivo) {
-      setOutput(
-        "[ERRO] Nenhum Isy-Token ativo encontrado para autenticar a requisição.",
-      );
-      return;
-    }
+    if (!tokenAtivo) return;
     setLoading(true);
-    setOutput(`[S.O.] Enviando request com X-Isy-Token ativo...`);
     try {
       const res = await fetch("/api/execute", {
         method: "POST",
@@ -104,23 +79,15 @@ export default function Home() {
           args: ["--interface-web", session?.user?.name || "Admin"],
         }),
       });
-
       if (!res.ok) {
-        const txtErro = await res.text();
-        setOutput(`[ERRO HTTP ${res.status}] Falha na rota do servidor.`);
-        console.error(
-          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/execute:`,
-          txtErro,
-        );
         setLoading(false);
         return;
       }
-
       const data = await res.json();
-      setOutput(data.success ? data.output : `[ERRO TERMINAL] ${data.error}`);
+      setOutput(data.success ? data.output : `[ERRO] ${data.error}`);
       carregarLogs();
     } catch (err: any) {
-      setOutput(`[ERRO DE CONEXÃO] ${err.message}`);
+      setOutput(`[ERRO] ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -134,61 +101,54 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nomeToken }),
       });
-
-      if (!res.ok) {
-        const txtErro = await res.text();
-        console.error(
-          `[ISY-DEBUG] Erro HTTP ${res.status} ao criar token:`,
-          txtErro,
-        );
-        return;
-      }
-
-      const data = await res.json();
-      if (data.success) {
-        setNovoTokenGerado(data.data.token);
-        await carregarTokensDoBanco();
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setNovoTokenGerado(data.data.token);
+          await carregarTokensDoBanco();
+        }
       }
     } catch (err) {
-      console.error("[ISY-DEBUG] Erro na requisição de geração de token:", err);
+      console.error(err);
     }
   };
 
-  // Função para deletar a chave e atualizar a lista
   const deletarToken = async (tokenString: string) => {
     try {
-      const res = await fetch(`/api/tokens?token=${tokenString}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/tokens?token=${tokenString}`, { method: "DELETE" });
       const data = await res.json();
-      if (data.success) {
-        console.log("[ISY-DEBUG] Token revogado com sucesso!");
-        // Recarrega a lista do banco automaticamente após a deleção
-        await carregarTokensDoBanco();
-      } else {
-        console.error("[ISY-DEBUG] Erro ao deletar:", data.error);
-      }
+      if (data.success) await carregarTokensDoBanco();
     } catch (err) {
-      console.error("[ISY-DEBUG] Erro de rede ao deletar token:", err);
+      console.error(err);
     }
   };
 
-  // Ciclo único de inicialização quando o login acontece
   useEffect(() => {
-    if (session) {
-      carregarTokensDoBanco();
-    }
-  }, [session]);
+    if (session && !sistemaNukado) carregarTokensDoBanco();
+  }, [session, sistemaNukado]);
 
-  // Polling reativo e isolado apenas se houver sessão e token ativo configurados
   useEffect(() => {
-    if (!session || !tokenAtivo) return;
-
+    if (!session || !tokenAtivo || sistemaNukado) return;
     carregarLogs();
     const interval = setInterval(carregarLogs, 5000);
     return () => clearInterval(interval);
-  }, [session, tokenAtivo]);
+  }, [session, tokenAtivo, sistemaNukado]);
+
+  // Callback de destruição disparado pelo timer da PanicTab
+  const executarFimDoMundo = () => {
+    setSistemaNukado(true);
+  };
+
+  // Executa o Reboot real limpando tudo e deslogando o Google SSO
+  const reiniciarSessaoDoZero = () => {
+    setSistemaNukado(false);
+    setActiveTab("home");
+    setTokenAtivo("");
+    setTokens([]);
+    setLogs([]);
+    setOutput("");
+    signOut({ callbackUrl: "/" });
+  };
 
   if (status === "loading") {
     return (
@@ -203,14 +163,50 @@ export default function Home() {
     return <FrontPage />;
   }
 
+  // 💀 INTERVENÇÃO DE LAYOUT GLOBAL: Se foi nukado, desmonta tudo e mostra a tela cinzenta de colapso
+  if (sistemaNukado) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-red-500 font-mono p-6 flex flex-col items-center justify-center select-none text-left relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[size:100%_4px,3px_100%] pointer-events-none animate-[pulse_0.1s_infinite]"></div>
+        
+        <div className="w-full max-w-2xl border-2 border-red-600 bg-black p-6 space-y-6 shadow-[0_0_50px_rgba(220,38,38,0.2)] rounded-lg">
+          <div className="bg-red-600 text-black font-black px-2 py-1 text-center text-sm uppercase tracking-widest">
+            !!! FATAL EXCEPTION DETECTED !!!
+          </div>
+          
+          <div className="space-y-2 text-xs text-red-400">
+            <p className="font-bold text-white text-sm">&gt; KERNEL_PANIC: ORG.ISYONE.CORE.PURGE_INTERRUPT</p>
+            <p>• COLD REBOOT REQUESTED ON OPERATOR TERMINAL...</p>
+            <p>• DUMPING POSTGRES RELATIONS... [SUCCESS: 100% WIPED]</p>
+            <p>• REVOKING HARDWARE TOKENS... [ALL KEYS INVALIDATED]</p>
+            <p>• DISCORD AUDIT BARRIER... [ALERTA DISPARADO NO HUB]</p>
+            <p>--------------------------------------------------------</p>
+            <p className="text-zinc-600">STACK TRACE DESTRUTIVO EM REPOUSO:</p>
+            <p className="text-zinc-500 break-all bg-zinc-950 p-2 border border-zinc-900">
+              0x0000000B (SIGSEGV) // CORE_DUMPED_AT_0x88FF9A // ATUADOR_FISICO_DISPARADO // MEM_FLUSH_COMPLETE // INSTANCE_SANUTIZED_BY_ROOT
+            </p>
+          </div>
+
+          <div className="border-t border-zinc-900 pt-4 text-center">
+            <p className="text-xs text-zinc-500 uppercase tracking-widest animate-pulse mb-4">
+              Ponte criptográfica destruída. Sistema offline.
+            </p>
+            <button
+              onClick={reiniciarSessaoDoZero}
+              className="px-6 py-2.5 bg-transparent border border-red-500 hover:bg-red-600 hover:text-black font-bold text-xs uppercase tracking-widest duration-150 transition-all cursor-pointer shadow-[0_0_15px_rgba(220,38,38,0.1)] hover:shadow-[0_0_25px_rgba(220,38,38,0.4)]"
+            >
+              [➔ INITIALIZE_REBOOT_NODE]
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row items-start gap-6 lg:gap-8">
       <div className="w-full md:w-auto shrink-0 rounded-2xl border border-zinc-800 overflow-hidden shadow-xl bg-zinc-900">
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          user={session.user!}
-        />
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={session.user!} />
       </div>
 
       <div className="flex-1 w-full min-w-0">
@@ -224,32 +220,15 @@ export default function Home() {
         </div>
 
         {activeTab === "home" && <WelcomeCard />}
-
         {activeTab === "docs" && <DocsTab />}
-
-        {activeTab === "scripts" && (
-          <ScriptsTab
-            loading={loading}
-            output={output}
-            dispararScript={dispararScript}
-            tokenAtivo={tokenAtivo}
-          />
-        )}
-
-        {activeTab === "create_script" && (
-          <CreateScriptTab tokenAtivo={tokenAtivo} />
-        )}
-
+        {activeTab === "scripts" && <ScriptsTab loading={loading} output={output} dispararScript={dispararScript} tokenAtivo={tokenAtivo} />}
+        {activeTab === "create_script" && <CreateScriptTab tokenAtivo={tokenAtivo} />}
         {activeTab === "logs" && <LogsTab logs={logs} />}
-
-        {activeTab === "tokens" && (
-          <TokensTab
-            tokens={tokens}
-            novoTokenGerado={novoTokenGerado}
-            gerarNovoIsyToken={gerarNovoIsyToken}
-            deletarToken={deletarToken}
-          />
-        )}
+        {activeTab === "tokens" && <TokensTab tokens={tokens} novoTokenGerado={novoTokenGerado} gerarNovoIsyToken={gerarNovoIsyToken} deletarToken={deletarToken} />}
+        
+        {/* 🚨 Aciona o callback que desmonta a árvore e corta o som */}
+        {activeTab === "panic" && <PanicTab tokenAtivo={tokenAtivo} onNukeComplete={executarFimDoMundo} />}
+        {activeTab === "webhook" && <WebhookTab />}
       </div>
     </div>
   );
