@@ -87,7 +87,22 @@ export function ScriptsTab({
 
       {/* GRID DE SCRIPTS DINÂMICO */}
       <div className="max-h-[340px] overflow-y-auto pr-1 pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-        {loadingScripts ? (
+        {!tokenAtivo ? (
+          <div className="flex flex-col items-center justify-center h-40 bg-zinc-950 rounded-2xl border border-rose-900/40 shadow-inner gap-3 text-zinc-500 text-xs text-center px-6">
+            <span className="text-3xl opacity-80 mb-1">🔐</span>
+            <span className="tracking-widest uppercase text-[10px] font-bold text-rose-400">
+              ACESSO NEGADO // TOKEN AUSENTE
+            </span>
+            <span className="text-zinc-500 text-[11px] leading-relaxed">
+              Você precisa gerar uma chave na aba{" "}
+              <span className="text-amber-400 font-bold bg-amber-950/20 px-1 py-0.5 rounded border border-amber-500/20">
+                [06] AUTH_KEYPAD
+              </span>{" "}
+              para ter acesso à matriz de execução e visualizar os scripts no
+              host.
+            </span>
+          </div>
+        ) : loadingScripts ? (
           <div className="flex flex-col items-center justify-center h-40 bg-zinc-950 rounded-2xl border border-zinc-800/60 shadow-inner gap-3 text-zinc-500 text-xs">
             <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
             <span className="tracking-widest uppercase text-[10px] font-bold text-zinc-600 animate-pulse">

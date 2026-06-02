@@ -44,9 +44,10 @@ export function DocsTab() {
           logado, buscamos os tokens desse usuário na DB.
           <br />
           <br />
-          Se o usuário não tiver tokens, geramos o primeiro automaticamente com
-          um algoritmo <strong>SHA-256</strong> seguro e inserimos na database
-          junto ao seu e-mail.
+          Seguindo o princípio de{" "}
+          <strong>Privilégio Mínimo (Implicit Deny)</strong>, se o usuário não
+          possuir tokens no momento do acesso, o sistema não criará nenhum
+          automaticamente. O usuário deverá gerar chaves ativamente pelo painel.
         </DocSection>
 
         <DocSection title="Listagem de Scripts (/api/list_scripts)" icon="📂">

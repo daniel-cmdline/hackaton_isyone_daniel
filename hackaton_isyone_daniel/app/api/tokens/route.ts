@@ -34,18 +34,8 @@ export async function GET(req: NextRequest) {
       [email],
     );
 
-    // Se o cara acabou de logar e não tem NENHUM token, vamos gerar o primeiro automaticamente
-    if (rows.length === 0) {
-      // Compilando hash SHA-256 de auditoria para o token mestre inicial
-      const tokenMestreInicial = generateSecureShaToken();
-      
-      const insertQuery = await db.query(
-        "INSERT INTO isy_tokens (name, token, user_email) VALUES ($1, $2, $3) RETURNING *",
-        ["Token Inicial Autogerado", tokenMestreInicial, email],
-      );
-      return NextResponse.json({ success: true, data: insertQuery.rows });
-    }
-
+    // Princípio de Privilégio Mínimo (Implicit Deny)
+    // Se não houver tokens, a variável 'rows' será [] e é exatamente isso que retornaremos.
     return NextResponse.json({ success: true, data: rows });
   } catch (err: any) {
     console.error("🔥 [FATAL] GET /api/tokens quebrou:", err);
@@ -132,7 +122,10 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, message: "Token revogado com sucesso." });
+    return NextResponse.json({
+      success: true,
+      message: "Token revogado com sucesso.",
+    });
   } catch (err: any) {
     console.error("🔥 [FATAL] DELETE /api/tokens quebrou:", err);
     return NextResponse.json(
