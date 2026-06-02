@@ -232,7 +232,7 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
           </div>
           <div className="flex justify-between items-center text-[10px]">
             <span className="text-zinc-500">LOCAL_PORT:</span>
-            <span className="text-zinc-400">EZ//1</span>
+            <span className="text-zinc-400">EZZZ::1</span>
           </div>
         </div>
       </div>

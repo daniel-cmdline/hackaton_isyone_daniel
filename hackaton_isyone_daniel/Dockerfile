@@ -18,7 +18,7 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# 🚨 CRÍTICO PARA OS SEUS SCRIPTS BASH:
+# 🚨 CRÍTICO OS SCRIPTS BASH:
 # Instala as ferramentas de sistema que seus scripts usam (como procps para o ps/top e curl/bash)
 RUN apk add --no-cache bash curl procps
 
@@ -30,7 +30,7 @@ COPY --from=installer /app/.next ./.next
 COPY --from=installer /app/public ./public
 COPY --from=installer /app/node_modules ./node_modules
 
-# Cria a pasta interna onde o Docker Compose vai espelhar seus scripts do host
+# Cria a pasta interna onde o Docker Compose vai espelhar os scripts do host
 RUN mkdir -p /app/scripts
 
 EXPOSE 3000
