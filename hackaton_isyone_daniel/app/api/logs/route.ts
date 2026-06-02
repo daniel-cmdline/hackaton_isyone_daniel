@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     // Retorna os últimos 50 scripts executados para não cloggar a rota
     const logs = await db.query(
-      `SELECT id, command, status, created_at, left(stdout, 200) as stdout_preview 
+      `SELECT id, command, status, created_at, left(output, 200) as stdout_preview 
        FROM script_logs 
        ORDER BY created_at DESC LIMIT 50`,
     );

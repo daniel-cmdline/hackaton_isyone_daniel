@@ -10,17 +10,19 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 );
 
 -- Criação da tabela de logs de execução
-CREATE TABLE IF NOT EXISTS script_logs (
-    id SERIAL PRIMARY KEY,
-    command VARCHAR(255) NOT NULL,
-    executed_by_token VARCHAR(255) REFERENCES api_tokens(token_value),
-    status VARCHAR(50) DEFAULT 'PENDING',
-    stdout TEXT,
-    stderr TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE script_logs (
+  id SERIAL PRIMARY KEY,
+  command VARCHAR(255) NOT NULL,
+  status VARCHAR(50) NOT NULL,
+  output TEXT,
+  operator VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Inserindo um token padrão para você testar seus endpoints imediatamente
-INSERT INTO api_tokens (token_value, description) 
-VALUES ('isy_dev_token_secret_123', 'Token Local de Teste')
-ON CONFLICT (token_value) DO NOTHING;
+CREATE TABLE IF NOT EXISTS isy_tokens (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

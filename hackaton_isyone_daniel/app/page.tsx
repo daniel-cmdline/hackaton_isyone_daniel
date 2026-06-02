@@ -1,111 +1,234 @@
 // src/app/page.tsx
-'use client'
+"use client";
 
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Sidebar } from "@/components/SideBar";
+import { ScriptsTab } from "@/components/ScriptsTab";
+import { TokensTab } from "@/components/TokensTab";
 
 export default function Home() {
   const { data: session, status } = useSession();
+  const [activeTab, setActiveTab] = useState<"scripts" | "tokens">("scripts");
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
+  const [logs, setLogs] = useState<any[]>([]);
 
-  // Função que clica no botão da tela e dispara a API segura que criamos por trás
-  const dispararScript = async () => {
+  // ⚡ Gerenciamento Dinâmico de Tokens de Banco
+  const [tokens, setTokens] = useState<any[]>([]);
+  const [tokenAtivo, setTokenAtivo] = useState("");
+  const [novoTokenGerado, setNovoTokenGerado] = useState("");
+
+  // Busca chaves reais do banco cadastradas para o usuário
+  const carregarTokensDoBanco = async () => {
+    try {
+      const res = await fetch("/api/tokens", { method: "GET" });
+
+      if (!res.ok) {
+        const txtErro = await res.text();
+        console.error(
+          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/tokens:`,
+          txtErro,
+        );
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        setTokens(data.data);
+        setTokenAtivo(data.data[0].token);
+        console.log(
+          "[ISY-DEBUG] Token ativo configurado com sucesso:",
+          data.data[0].token,
+        );
+      } else {
+        console.warn(
+          "[ISY-DEBUG] Resposta de tokens vazia ou malformada:",
+          data,
+        );
+      }
+    } catch (err) {
+      console.error("[ISY-DEBUG] Falha de rede ao buscar /api/tokens:", err);
+    }
+  };
+
+  const carregarLogs = async () => {
+    if (!tokenAtivo) return;
+    try {
+      const res = await fetch("/api/logs", {
+        method: "GET",
+        headers: { "X-Isy-Token": tokenAtivo },
+      });
+
+      if (!res.ok) {
+        const txtErro = await res.text();
+        console.error(
+          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/logs:`,
+          txtErro,
+        );
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) setLogs(data.data);
+    } catch (err) {
+      console.error("[ISY-DEBUG] Falha de rede ao buscar /api/logs:", err);
+    }
+  };
+
+  const dispararScript = async (scriptName: string) => {
+    if (!tokenAtivo) {
+      setOutput(
+        "[ERRO] Nenhum Isy-Token ativo encontrado para autenticar a requisição.",
+      );
+      return;
+    }
     setLoading(true);
-    setOutput("Executando script no container...");
-    
+    setOutput(`[S.O.] Enviando request com X-Isy-Token ativo...`);
     try {
       const res = await fetch("/api/execute", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // 💡 Lembra do token de máquina? Injetamos ele aqui no header para passar na nossa própria API!
-          "X-Isy-Token": "isy_dev_token_secret_123" 
+          "X-Isy-Token": tokenAtivo,
         },
         body: JSON.stringify({
-          scriptName: "teste.sh",
-          args: ["--interface-web", session?.user?.name || "Admin"]
-        })
+          scriptName,
+          args: ["--interface-web", session?.user?.name || "Admin"],
+        }),
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setOutput(data.output);
-      } else {
-        setOutput(`Erro: ${data.error}`);
+      if (!res.ok) {
+        const txtErro = await res.text();
+        setOutput(`[ERRO HTTP ${res.status}] Falha na rota do servidor.`);
+        console.error(
+          `[ISY-DEBUG] Erro HTTP ${res.status} em /api/execute:`,
+          txtErro,
+        );
+        setLoading(false);
+        return;
       }
+
+      const data = await res.json();
+      setOutput(data.success ? data.output : `[ERRO TERMINAL] ${data.error}`);
+      carregarLogs();
     } catch (err: any) {
-      setOutput(`Erro de conexão: ${err.message}`);
+      setOutput(`[ERRO DE CONEXÃO] ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  if (status === "loading") {
-    return <div className="flex h-screen items-center justify-center font-mono">Carregando sessão...</div>;
-  }
+  const gerarNovoIsyToken = async () => {
+    try {
+      const nomeToken = `Chave_Ops_${tokens.length + 1}`;
+      const res = await fetch("/api/tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nomeToken }),
+      });
 
-  // TELA 1: Se o cara NÃO está logado
-  if (!session) {
+      if (!res.ok) {
+        const txtErro = await res.text();
+        console.error(
+          `[ISY-DEBUG] Erro HTTP ${res.status} ao criar token:`,
+          txtErro,
+        );
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setNovoTokenGerado(data.data.token);
+        await carregarTokensDoBanco();
+      }
+    } catch (err) {
+      console.error("[ISY-DEBUG] Erro na requisição de geração de token:", err);
+    }
+  };
+
+  // Ciclo único de inicialização quando o login acontece
+  useEffect(() => {
+    if (session) {
+      carregarTokensDoBanco();
+    }
+  }, [session]);
+
+  // Polling reativo e isolado apenas se houver sessão e token ativo configurados
+  useEffect(() => {
+    if (!session || !tokenAtivo) return;
+
+    carregarLogs();
+    const interval = setInterval(carregarLogs, 5000);
+    return () => clearInterval(interval);
+  }, [session, tokenAtivo]);
+
+  if (status === "loading") {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-zinc-50 font-sans">
-        <h1 className="text-3xl font-bold mb-2 text-indigo-400">Isyone Automation Panel</h1>
-        <p className="text-zinc-400 mb-6">Área restrita. Autentique-se para gerenciar o S.O.</p>
-        <button 
-          onClick={() => signIn("google")}
-          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg shadow-lg transition-all"
-        >
-          Entrar com o Google
-        </button>
+      <div className="flex min-h-[60vh] items-center justify-center font-mono text-indigo-400 animate-pulse">
+        Carregando cockpit...
       </div>
     );
   }
 
-  // TELA 2: Painel Principal se o usuário ESTÁ logado
+  if (!session) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center">
+        <div className="w-full max-w-md p-8 md:p-10 bg-zinc-900/60 border border-zinc-800 rounded-3xl shadow-2xl text-center backdrop-blur-sm">
+          <span className="text-6xl mb-6 block drop-shadow-md">⚡</span>
+          <h1 className="text-2xl font-bold mb-3 text-zinc-100 font-mono tracking-tight">
+            Isyone Ops Central
+          </h1>
+          <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
+            Autenticação segura via Single Sign-On é obrigatória para acessar as
+            instâncias.
+          </p>
+          <button
+            onClick={() => signIn("google")}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.25)] border border-indigo-500 hover:scale-[1.02] duration-200 transition-all"
+          >
+            Entrar com o Google SSO
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 p-8 font-sans">
-      <header className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-indigo-400">Dashboard de Automação</h1>
-          <p className="text-sm text-zinc-400">Conectado como: <span className="text-zinc-200 font-semibold">{session.user?.email}</span></p>
-        </div>
-        <button 
-          onClick={() => signOut()}
-          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm rounded transition-all"
-        >
-          Sair
-        </button>
-      </header>
+    <div className="flex flex-col md:flex-row items-start gap-6 lg:gap-8">
+      <div className="w-full md:w-auto shrink-0 rounded-2xl border border-zinc-800 overflow-hidden shadow-xl bg-zinc-900">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={session.user!}
+        />
+      </div>
 
-      <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card de Controle do Script */}
-        <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 md:col-span-1">
-          <h2 className="text-lg font-semibold mb-4 text-zinc-200">Scripts Disponíveis</h2>
-          <div className="space-y-3">
-            <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg flex flex-col justify-between gap-3">
-              <div>
-                <p className="font-mono text-sm text-emerald-400">teste.sh</p>
-                <p className="text-xs text-zinc-500">Testa execução no S.O. e printa argumentos.</p>
-              </div>
-              <button
-                onClick={dispararScript}
-                disabled={loading}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 font-semibold text-sm rounded transition-all"
-              >
-                {loading ? "Rodando..." : "Executar Comando"}
-              </button>
-            </div>
-          </div>
+      <div className="flex-1 w-full min-w-0">
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg text-sm font-medium transition-colors border border-zinc-700"
+          >
+            Sair
+          </button>
         </div>
 
-        {/* Terminal/Output de Logs */}
-        <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 md:col-span-2 flex flex-col">
-          <h2 className="text-lg font-semibold mb-4 text-zinc-200">Console Output</h2>
-          <div className="flex-1 bg-zinc-950 p-4 rounded-lg border border-zinc-800 font-mono text-xs overflow-x-auto whitespace-pre-wrap min-h-[250px] text-zinc-300">
-            {output || "Nenhum comando executado ainda nesta sessão. Clique em 'Executar' ao lado."}
-          </div>
-        </div>
-      </main>
+        {activeTab === "scripts" ? (
+          <ScriptsTab
+            loading={loading}
+            output={output}
+            logs={logs}
+            dispararScript={dispararScript}
+          />
+        ) : (
+          <TokensTab
+            tokens={tokens}
+            novoTokenGerado={novoTokenGerado}
+            gerarNovoIsyToken={gerarNovoIsyToken}
+          />
+        )}
+      </div>
     </div>
   );
 }

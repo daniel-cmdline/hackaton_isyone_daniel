@@ -1,82 +1,84 @@
+// src/app/api/execute/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { execa } from "execa";
-import { db } from "@/db/pool"; // Substitua pelo seu arquivo de conexão com o Postgres
+import { exec } from "child_process";
+import path from "path";
+import { db } from "@/db/pool";
 
 export async function POST(req: NextRequest) {
-  // 1. Garante a segurança estrita exigida pelo cabeçalho HTTP
-  const token = req.headers.get("x-isy-token");
-
-  if (!token) {
-    return NextResponse.json(
-      { error: "Acesso negado: Cabeçalho X-Isy-Token ausente." },
-      { status: 401 },
-    );
-  }
-
-  // 2. Valida se o token realmente existe e está ativo no Postgres
-  // Exemplo usando SQL puro, adapte para seu ORM se preferir
-  const tokenCheck = await db.query(
-    "SELECT * FROM api_tokens WHERE token_value = $1 AND active = true",
-    [token],
-  );
-
-  if (tokenCheck.rows.length === 0) {
-    return NextResponse.json(
-      { error: "Acesso negado: Token inválido ou revogado." },
-      { status: 403 },
-    );
-  }
-
-  // 3. Processa a requisição após validação de segurança
   try {
-    const body = await req.json();
-    const { scriptName, args } = body; // ex: scriptName: "backup.sh", args: ["--silent"]
+    // 1. Pega o token enviado obrigatoriamente pelo browser
+    const tokenEnviado = req.headers.get("X-Isy-Token");
 
-    if (!scriptName) {
+    if (!tokenEnviado) {
       return NextResponse.json(
-        { error: "scriptName é obrigatório." },
+        { success: false, error: "Header 'X-Isy-Token' ausente." },
         { status: 400 },
       );
     }
 
-    // Criamos o log inicial com status PENDING no banco
-    const logResult = await db.query(
-      `INSERT INTO script_logs (command, executed_by_token, status) 
-       VALUES ($1, $2, 'RUNNING') RETURNING id`,
-      [`${scriptName} ${args?.join(" ") || ""}`, token],
+    // 🔐 VALIDACÃO GOD: Checa em tempo real se o token existe no Postgres
+    const { rows } = await db.query(
+      "SELECT * FROM isy_tokens WHERE token = $1",
+      [tokenEnviado],
     );
-    const logId = logResult.rows[0].id;
 
-    // 4. Executa a nível de S.O. dentro do container
-    // IMPORTANTE: Por segurança, aponte sempre para a sua pasta de scripts controlados
-    const scriptPath = `./scripts/${scriptName}`;
-
-    try {
-      const { stdout, stderr } = await execa("sh", [
-        scriptPath,
-        ...(args || []),
-      ]);
-
-      // Atualiza o log com Sucesso
-      await db.query(
-        "UPDATE script_logs SET status = $1, stdout = $2, stderr = $3 WHERE id = $4",
-        ["SUCCESS", stdout, stderr, logId],
-      );
-
-      return NextResponse.json({ success: true, logId, output: stdout });
-    } catch (scriptError: any) {
-      // Se o script falhar (código de saída diferente de 0)
-      await db.query(
-        "UPDATE script_logs SET status = $1, stdout = $2, stderr = $3 WHERE id = $4",
-        ["FAILED", scriptError.stdout || "", scriptError.message, logId],
-      );
-
+    if (rows.length === 0) {
       return NextResponse.json(
-        { success: false, logId, error: scriptError.message },
-        { status: 500 },
+        { success: false, error: "X-Isy-Token inválido ou revogado no banco." },
+        { status: 401 },
       );
     }
+
+    const tokenValido = rows[0];
+    const operadorNome = tokenValido.user_email; // O dono do token
+
+    // 2. Executa o Script
+    const { scriptName, args } = await req.json();
+    if (!scriptName || scriptName.includes("..") || scriptName.includes("/")) {
+      return NextResponse.json(
+        { success: false, error: "Nome de script inválido." },
+        { status: 400 },
+      );
+    }
+
+    const caminhoScript = path.join(process.cwd(), "scripts", scriptName);
+    const argumentosSanitizados = Array.isArray(args) ? args.join(" ") : "";
+
+    const resultadoExecucao = await new Promise<{
+      success: boolean;
+      output: string;
+    }>((resolve) => {
+      exec(
+        `${caminhoScript} ${argumentosSanitizados}`,
+        async (error, stdout, stderr) => {
+          const outputCompleto = stdout + stderr;
+          const statusFinal = error ? "FAILED" : "SUCCESS";
+
+          // Grava o log de auditoria
+          try {
+            await db.query(
+              "INSERT INTO script_logs (command, status, output, operator) VALUES ($1, $2, $3, $4)",
+              [
+                scriptName,
+                statusFinal,
+                outputCompleto,
+                `Painel (Token: ${tokenEnviado.substring(0, 12)}...)`,
+              ],
+            );
+          } catch (dbErr) {
+            console.error(dbErr);
+          }
+
+          resolve({ success: !error, output: outputCompleto });
+        },
+      );
+    });
+
+    return NextResponse.json(resultadoExecucao);
   } catch (err: any) {
-    return NextResponse.json({ error: "Payload inválido." }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500 },
+    );
   }
 }
