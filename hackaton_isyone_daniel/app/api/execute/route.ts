@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
     }
 
     const tokenValido = rows[0];
-    const operadorNome = tokenValido.user_email; // O dono do token
 
     // 2. Executa o Script
     const { scriptName, args } = await req.json();
@@ -43,6 +42,14 @@ export async function POST(req: NextRequest) {
 
     const caminhoScript = path.join(process.cwd(), "scripts", scriptName);
     const argumentosSanitizados = Array.isArray(args) ? args.join(" ") : "";
+
+    try {
+      const { execSync } = require("child_process");
+      execSync(`chmod +x "${caminhoScript}"`);
+      // Se o arquivo já tiver permissão, ele não faz nada. Se não tiver, ele resolve o B.O. em 1 milissegundo.
+    } catch (permErr) {
+      console.error("⚠️ Falha ao tentar forçar chmod automágico:", permErr);
+    }
 
     const resultadoExecucao = await new Promise<{
       success: boolean;

@@ -52,7 +52,6 @@ export function ScriptsTab({
 
   return (
     <div className="space-y-6 font-mono selection:bg-cyan-500/30">
-      
       {/* CABEÇALHO DO MÓDULO */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-2 border-cyan-500 pl-4 py-1">
         <div>
@@ -63,16 +62,21 @@ export function ScriptsTab({
             Cockpit de Execução Core
           </h2>
           <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed font-sans">
-            Dispare tarefas críticas, pipelines e automações assíncronas diretamente em nível de Sistema Operacional. Os processos rodam isolados no host através da runtime protegida da <span className="text-cyan-400 font-mono">Isyone Engine</span>.
+            Dispare tarefas críticas, pipelines e automações assíncronas
+            diretamente em nível de Sistema Operacional. Os processos rodam
+            isolados no host através da runtime protegida da{" "}
+            <span className="text-cyan-400 font-mono">Isyone Engine</span>.
           </p>
         </div>
-        
+
         <button
           onClick={fetchScripts}
           disabled={loadingScripts}
           className="self-start sm:self-center px-4 py-2 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-950 disabled:text-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl border border-zinc-800/80 active:scale-[0.98] transition-all flex items-center gap-2 select-none shrink-0"
         >
-          <span className={`inline-block text-xs ${loadingScripts ? "animate-spin" : ""}`}>
+          <span
+            className={`inline-block text-xs ${loadingScripts ? "animate-spin" : ""}`}
+          >
             🔄
           </span>
           {loadingScripts ? "Scanning..." : "Atualizar"}

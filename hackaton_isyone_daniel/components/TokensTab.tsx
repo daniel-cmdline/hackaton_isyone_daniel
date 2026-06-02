@@ -12,12 +12,17 @@ interface TokensTabProps {
   tokens: TokenStructure[];
   novoTokenGerado: string;
   gerarNovoIsyToken: () => void;
+  deletarToken: (tokenString: string) => void;
 }
 
-export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: TokensTabProps) {
+export function TokensTab({
+  tokens,
+  novoTokenGerado,
+  gerarNovoIsyToken,
+  deletarToken,
+}: TokensTabProps) {
   return (
     <div className="space-y-6 font-mono selection:bg-amber-500/30">
-      
       {/* CABEÇALHO DO MÓDULO */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-2 border-amber-500 pl-4 py-1">
         <div>
@@ -28,10 +33,12 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
             Gerenciador de X-Isy-Tokens
           </h2>
           <p className="text-xs text-zinc-400 mt-1 max-w-2xl leading-relaxed font-sans">
-            Provisione credenciais estáticas simétricas para permitir que nós de microsserviços ou daemons externos assinem requisições na API com segurança de criptografia em repouso.
+            Provisione credenciais estáticas simétricas para permitir que nós de
+            microsserviços ou daemons externos assinem requisições na API com
+            segurança de criptografia em repouso.
           </p>
         </div>
-        
+
         <button
           onClick={gerarNovoIsyToken}
           className="px-4 py-2 bg-amber-600 hover:bg-amber-500 border border-amber-400/40 text-zinc-100 font-bold text-xs uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] active:scale-[0.98] transition-all duration-150 flex items-center gap-2 select-none shrink-0"
@@ -46,17 +53,21 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
           <div className="absolute top-0 right-0 text-[35px] opacity-[0.03] select-none font-bold p-2 text-amber-500">
             SECURE_KEY
           </div>
-          
+
           <div className="flex items-center gap-2 text-amber-400 font-bold uppercase tracking-wider text-[10px] mb-2 select-none">
             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
             [ WARNING // VOLATILE_CREDENTIAL_INJECTED ]
           </div>
           <p className="text-zinc-300 font-sans text-xs mb-3 pl-3.5 border-l border-zinc-800">
-            Chave simétrica compilada com sucesso. Armazene este hash em seu gerenciador de segredos local. Ele não será exibido novamente no painel.
+            Chave simétrica compilada com sucesso. Armazene este hash em seu
+            gerenciador de segredos local. Ele não será exibido novamente no
+            painel.
           </p>
-          
+
           <div className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-900 flex justify-between items-center text-amber-400 select-all font-mono text-xs shadow-inner border-l-2 border-l-amber-500 font-bold group/token">
-            <span className="break-all tracking-wider font-mono">{novoTokenGerado}</span>
+            <span className="break-all tracking-wider font-mono">
+              {novoTokenGerado}
+            </span>
             <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md uppercase font-mono tracking-widest font-bold select-none shrink-0 ml-4">
               READY
             </span>
@@ -66,7 +77,6 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
 
       {/* PAINEL DE CHAVES ATIVAS CADAUSTRADAS */}
       <div className="bg-zinc-950 rounded-2xl border border-zinc-800/80 shadow-[0_20px_40px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden relative group">
-        
         {/* Barra superior de identificação do Vault */}
         <div className="bg-zinc-900/80 backdrop-blur-sm px-4 py-2.5 border-b border-zinc-800/60 flex items-center justify-between select-none text-[10px]">
           <div className="flex items-center gap-2 text-zinc-400 font-bold">
@@ -82,12 +92,13 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
         <div className="p-5 space-y-3 max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
           {tokens.length === 0 ? (
             <div className="p-8 text-center text-zinc-600 text-xs select-none">
-              &gt; Nenhuma credencial cadastrada neste nó de segurança. Vault vazio.
+              &gt; Nenhuma credencial cadastrada neste nó de segurança. Vault
+              vazio.
             </div>
           ) : (
             tokens.map((tk) => (
-              <div 
-                key={tk.id} 
+              <div
+                key={tk.id}
                 className="p-4 bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-900 hover:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all duration-150 group/item"
               >
                 <div className="flex items-center gap-4 min-w-0">
@@ -99,12 +110,14 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
                       {tk.name}
                     </p>
                     <p className="text-zinc-600 font-mono text-[10px] mt-0.5 tracking-widest truncate">
-                      <span className="text-zinc-500 font-bold">{tk.token.substring(0, 12)}</span>
+                      <span className="text-zinc-500 font-bold">
+                        {tk.token.substring(0, 12)}
+                      </span>
                       <span>••••••••••••</span>
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="text-right shrink-0 flex items-center gap-4 select-none">
                   <span className="inline-block px-2 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 rounded-md text-[9px] font-bold tracking-widest uppercase shadow-[0_0_10px_rgba(16,185,129,0.05)]">
                     ACTIVE
@@ -113,9 +126,17 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
                     {new Date(tk.created_at).toLocaleDateString("pt-BR", {
                       day: "2-digit",
                       month: "2-digit",
-                      year: "numeric"
+                      year: "numeric",
                     })}
                   </span>
+
+                  <button
+                    onClick={() => deletarToken(tk.token)}
+                    className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/50 rounded-lg transition-all opacity-80 hover:opacity-100 hover:scale-105 active:scale-95"
+                    title="Revogar credencial"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))
@@ -127,7 +148,6 @@ export function TokensTab({ tokens, novoTokenGerado, gerarNovoIsyToken }: Tokens
           <div>AES-GCM encryption node state: VALID</div>
           <div>FMU_VAULT_STATION // 2026</div>
         </div>
-
       </div>
     </div>
   );

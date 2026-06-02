@@ -1,21 +1,43 @@
 version: '3.8'
 
 services:
+  # -------------------------------------------------------------
+  # SERVIÇO 1: BANCO DE DADOS (POSTGRESQL)
+  # -------------------------------------------------------------
   db:
     image: postgres:15-alpine
     container_name: hackaton_postgres
     restart: always
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: supersecretpassword
-      POSTGRES_DB: isy_automation
+    # 🔌 Injeta as variáveis de banco declaradas no seu .env local
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
-      # Mantém os dados salvos na sua máquina (na pasta oculta .pgdata)
       - .pgdata:/var/lib/postgresql/data
-      # Injeta o script SQL para criar o banco e as tabelas automaticamente
       - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - isy-network
+
+  # -------------------------------------------------------------
+  # SERVIÇO 2: API & FRONTEND (NEXT.JS APP)
+  # -------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: isyone_ops_central
+    restart: always
+    ports:
+      - "3000:3000"
+    # 🔌 Repassa o .env para o Next.js ler o POSTGRES_HOST e os Secrets do NextAuth
+    env_file:
+      - .env
+    volumes:
+      # Mapeamento exigido pela banca para ler os scripts do host
+      - ./scripts:/app/scripts
+    depends_on:
+      - db
     networks:
       - isy-network
 

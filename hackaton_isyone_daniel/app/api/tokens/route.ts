@@ -97,3 +97,47 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// 🗑️ DELETE: Remove um token do usuário no banco
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: "Não autenticado" },
+        { status: 401 },
+      );
+    }
+
+    const email = session.user.email;
+    const tokenParaDeletar = req.nextUrl.searchParams.get("token");
+
+    if (!tokenParaDeletar) {
+      return NextResponse.json(
+        { success: false, error: "O parâmetro 'token' é obrigatório." },
+        { status: 400 },
+      );
+    }
+
+    // Deleta o token apenas se o e-mail do dono bater com o da sessão atual
+    const deleteResult = await db.query(
+      "DELETE FROM isy_tokens WHERE token = $1 AND user_email = $2 RETURNING *",
+      [tokenParaDeletar, email],
+    );
+
+    if (deleteResult.rowCount === 0) {
+      return NextResponse.json(
+        { success: false, error: "Token não encontrado ou acesso negado." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true, message: "Token revogado com sucesso." });
+  } catch (err: any) {
+    console.error("🔥 [FATAL] DELETE /api/tokens quebrou:", err);
+    return NextResponse.json(
+      { success: false, error: err.message, stack: err.stack },
+      { status: 500 },
+    );
+  }
+}

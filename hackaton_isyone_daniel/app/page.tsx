@@ -153,6 +153,26 @@ export default function Home() {
     }
   };
 
+  // Função para deletar a chave e atualizar a lista
+  const deletarToken = async (tokenString: string) => {
+    try {
+      const res = await fetch(`/api/tokens?token=${tokenString}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        console.log("[ISY-DEBUG] Token revogado com sucesso!");
+        // Recarrega a lista do banco automaticamente após a deleção
+        await carregarTokensDoBanco();
+      } else {
+        console.error("[ISY-DEBUG] Erro ao deletar:", data.error);
+      }
+    } catch (err) {
+      console.error("[ISY-DEBUG] Erro de rede ao deletar token:", err);
+    }
+  };
+
   // Ciclo único de inicialização quando o login acontece
   useEffect(() => {
     if (session) {
@@ -224,6 +244,7 @@ export default function Home() {
             tokens={tokens}
             novoTokenGerado={novoTokenGerado}
             gerarNovoIsyToken={gerarNovoIsyToken}
+            deletarToken={deletarToken}
           />
         )}
       </div>
