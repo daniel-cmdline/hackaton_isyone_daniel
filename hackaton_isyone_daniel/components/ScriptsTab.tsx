@@ -1,168 +1,146 @@
 // src/components/ScriptsTab.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { LiveTerminal } from "./Terminal";
+
 interface ScriptsTabProps {
   loading: boolean;
   output: string;
-  logs: any[];
   dispararScript: (scriptName: string) => void;
+  tokenAtivo: string;
 }
 
 export function ScriptsTab({
   loading,
   output,
-  logs,
   dispararScript,
+  tokenAtivo,
 }: ScriptsTabProps) {
-  // Lista dinâmica de scripts para facilitar adicionar novos e renderizar em loop
-  const SCRIPTS = [
-    {
-      file: "check_ip.sh",
-      desc: "Retorna o endereço IP público (IPv4) da instância via ifconfig.co.",
-      color: "text-blue-400",
-    },
-    {
-      file: "check_dns.sh",
-      desc: "Inspeciona a configuração de rede para mapear os servidores DNS em uso.",
-      color: "text-purple-400",
-    },
-    {
-      file: "port_scanner.sh",
-      desc: "Realiza uma varredura rápida de portas TCP ativas no localhost.",
-      color: "text-red-400",
-    },
-    {
-      file: "sys_audit.sh",
-      desc: "Auditoria de SO: Kernel, uptime, arquitetura e carga média da CPU.",
-      color: "text-yellow-400",
-    },
-    {
-      file: "flush_ram.sh",
-      desc: "Força a liberação do cache de memória RAM (PageCache, dentries e inodes).",
-      color: "text-emerald-400",
-    },
-    {
-      file: "matrix_mode.sh",
-      desc: "Injeta um fluxo intenso de dados encriptados direto no terminal.",
-      color: "text-green-500",
-    },
-    {
-      file: "nuke_cache.sh",
-      desc: "Limpeza profunda de todos os caches e arquivos temporários do sistema.",
-      color: "text-orange-500",
-    },
-    {
-      file: "crypto_miner.sh",
-      desc: "Inicia um worker falso simulando mineração de criptomoedas no terminal.",
-      color: "text-cyan-400",
-    },
-    {
-      file: "trace_route.sh",
-      desc: "Mapeia os saltos de rede até um servidor externo (Google DNS).",
-      color: "text-pink-400",
-    },
-    {
-      file: "kill_zombies.sh",
-      desc: "Identifica e encerra processos zumbis que estão consumindo CPU livre.",
-      color: "text-rose-500",
-    },
-  ];
+  const [scriptsList, setScriptsList] = useState<any[]>([]);
+  const [loadingScripts, setLoadingScripts] = useState(true);
+
+  const fetchScripts = async () => {
+    if (!tokenAtivo) return;
+
+    setLoadingScripts(true);
+    try {
+      const res = await fetch("/api/list_scripts", {
+        headers: {
+          "X-Isy-Token": tokenAtivo,
+        },
+      });
+      const data = await res.json();
+      if (data.success) setScriptsList(data.data);
+    } catch (err) {
+      console.error("Erro ao carregar scripts:", err);
+    } finally {
+      setLoadingScripts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tokenAtivo) {
+      fetchScripts();
+    }
+  }, [tokenAtivo]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-zinc-100">
-          Cockpit de Execução Core
-        </h2>
-        <p className="text-xs text-zinc-400">
-          Dispare tarefas e automações diretamente a nível de Sistema
-          Operacional.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-xl font-bold text-zinc-100">
+            Cockpit de Execução Core
+          </h2>
+          <p className="text-xs text-zinc-400">
+            Dispare tarefas e automações diretamente a nível de Sistema
+            Operacional.
+          </p>
+        </div>
+        <button
+          onClick={fetchScripts}
+          disabled={loadingScripts}
+          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg border border-zinc-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+        >
+          <span className={loadingScripts ? "animate-spin inline-block" : ""}>
+            🔄
+          </span>{" "}
+          Atualizar
+        </button>
       </div>
 
       {/* Grid de Scripts Dinâmico */}
       <div className="max-h-[320px] overflow-y-auto pr-2 pb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {SCRIPTS.map((script) => (
-            <div
-              key={script.file}
-              className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl shadow-sm flex flex-col justify-between hover:border-zinc-700 transition-colors"
-            >
-              <div className="mb-4">
-                <p
-                  className={`font-mono text-sm font-bold flex items-center gap-2 ${script.color}`}
-                >
-                  <span className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] bg-current"></span>
-                  {script.file}
-                </p>
-                <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-                  {script.desc}
-                </p>
-              </div>
-              <button
-                onClick={() => dispararScript(script.file)}
-                disabled={loading}
-                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-500 font-semibold text-sm rounded-lg transition-all"
+        {loadingScripts ? (
+          <div className="flex items-center justify-center h-32 gap-3 text-zinc-400 text-sm">
+            <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <span>Buscando scripts disponíveis no SO...</span>
+          </div>
+        ) : scriptsList.length === 0 ? (
+          <div className="flex items-center justify-center h-32 bg-zinc-900 border border-zinc-800 rounded-xl">
+            <span className="text-zinc-500 text-sm">
+              Nenhum script encontrado na pasta.
+            </span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {scriptsList.map((script) => (
+              <div
+                key={script.file}
+                className="p-5 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/80 rounded-xl shadow-lg flex flex-col justify-between group hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden"
               >
-                {loading ? "Executando..." : "Executar Script"}
-              </button>
-            </div>
-          ))}
-        </div>
+                {/* Efeito de luz de fundo ao passar o mouse */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+                <div className="mb-5 relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-mono text-sm font-bold flex items-center gap-2.5 text-zinc-200 group-hover:text-emerald-400 transition-colors">
+                      {/* LED piscando */}
+                      <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                      </span>
+                      {script.file}
+                    </p>
+                    <span className="text-[9px] font-mono text-zinc-600 group-hover:text-emerald-500/70 transition-colors border border-zinc-800 group-hover:border-emerald-500/30 px-2 py-0.5 rounded bg-zinc-900/50 tracking-wider">
+                      BASH
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed group-hover:text-zinc-300 transition-colors flex items-start gap-1.5">
+                    <span className="text-emerald-500/50 opacity-0 group-hover:opacity-100 transition-opacity font-mono mt-0.5">
+                      $
+                    </span>
+                    {script.desc}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => dispararScript(script.file)}
+                  disabled={loading}
+                  className="relative z-10 w-full py-2.5 bg-zinc-900 border border-zinc-800 group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10 text-zinc-300 group-hover:text-emerald-400 disabled:bg-zinc-950 disabled:border-zinc-800 disabled:text-zinc-600 font-mono text-[11px] uppercase tracking-widest font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></span>{" "}
+                      Em Execução...
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-emerald-500 group-hover:animate-pulse">
+                        ▶
+                      </span>{" "}
+                      Disparar
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Terminal Output */}
-      <div className="bg-zinc-900 p-5 rounded-xl border border-zinc-800 flex flex-col shadow-sm">
-        <h3 className="text-sm font-semibold mb-3 text-zinc-300 font-mono flex items-center gap-2">
-          <span>📺</span> Terminal Live Output
-        </h3>
-        <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-900 font-mono text-xs text-zinc-300 min-h-[160px] whitespace-pre-wrap overflow-x-auto">
-          {output || "Aguardando gatilho de execução de script..."}
-        </div>
-      </div>
-
-      {/* Histórico de Logs */}
-      <div className="bg-zinc-900 p-5 rounded-xl border border-zinc-800 shadow-sm">
-        <h3 className="text-sm font-semibold mb-3 text-zinc-300 font-mono flex items-center gap-2">
-          <span>📊</span> Histórico de Auditoria (Postgres)
-        </h3>
-        <div className="overflow-x-auto max-h-[300px]">
-          <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-zinc-950 text-zinc-400 uppercase text-[9px] border-b border-zinc-800 sticky top-0">
-              <tr>
-                <th className="p-3">ID</th>
-                <th className="p-3">Comando</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Data</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-zinc-850/40">
-                  <td className="p-3 text-zinc-500">#{log.id}</td>
-                  <td className="p-3 text-zinc-200 font-semibold">
-                    {log.command}
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                        log.status === "SUCCESS"
-                          ? "bg-emerald-950 text-emerald-400 border border-emerald-900"
-                          : "bg-red-950 text-red-400 border border-red-900"
-                      }`}
-                    >
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-zinc-400 text-[11px]">
-                    {new Date(log.created_at).toLocaleString("pt-BR")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <LiveTerminal output={output} />
     </div>
   );
 }

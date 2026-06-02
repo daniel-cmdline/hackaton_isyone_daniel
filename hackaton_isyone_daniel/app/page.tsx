@@ -6,10 +6,16 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/SideBar";
 import { ScriptsTab } from "@/components/ScriptsTab";
 import { TokensTab } from "@/components/TokensTab";
+import { LogsTab } from "@/components/LogsTab";
+import { CreateScriptTab } from "@/components/CreateScriptTab";
+import { FrontPage } from "@/components/FrontPage";
+import { WelcomeCard } from "@/components/Home";
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState<"scripts" | "tokens">("scripts");
+  const [activeTab, setActiveTab] = useState<
+    "home" | "scripts" | "tokens" | "logs" | "create_script"
+  >("home");
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
   const [logs, setLogs] = useState<any[]>([]);
@@ -165,33 +171,15 @@ export default function Home() {
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center font-mono text-indigo-400 animate-pulse">
-        Carregando cockpit...
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 font-mono text-indigo-400 animate-pulse">
+        <span>Carregando cockpit...</span>
+        <div className="w-8 h-8 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (!session) {
-    return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center">
-        <div className="w-full max-w-md p-8 md:p-10 bg-zinc-900/60 border border-zinc-800 rounded-3xl shadow-2xl text-center backdrop-blur-sm">
-          <span className="text-6xl mb-6 block drop-shadow-md">⚡</span>
-          <h1 className="text-2xl font-bold mb-3 text-zinc-100 font-mono tracking-tight">
-            Isyone Ops Central
-          </h1>
-          <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
-            Autenticação segura via Single Sign-On é obrigatória para acessar as
-            instâncias.
-          </p>
-          <button
-            onClick={() => signIn("google")}
-            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.25)] border border-indigo-500 hover:scale-[1.02] duration-200 transition-all"
-          >
-            Entrar com o Google SSO
-          </button>
-        </div>
-      </div>
-    );
+    return <FrontPage />;
   }
 
   return (
@@ -214,14 +202,24 @@ export default function Home() {
           </button>
         </div>
 
-        {activeTab === "scripts" ? (
+        {activeTab === "home" && <WelcomeCard />}
+
+        {activeTab === "scripts" && (
           <ScriptsTab
             loading={loading}
             output={output}
-            logs={logs}
             dispararScript={dispararScript}
+            tokenAtivo={tokenAtivo}
           />
-        ) : (
+        )}
+
+        {activeTab === "create_script" && (
+          <CreateScriptTab tokenAtivo={tokenAtivo} />
+        )}
+
+        {activeTab === "logs" && <LogsTab logs={logs} />}
+
+        {activeTab === "tokens" && (
           <TokensTab
             tokens={tokens}
             novoTokenGerado={novoTokenGerado}
