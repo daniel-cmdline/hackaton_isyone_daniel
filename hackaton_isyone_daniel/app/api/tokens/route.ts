@@ -1,9 +1,19 @@
 // src/app/api/tokens/route.ts
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { randomBytes, createHash } from "crypto";
 import { db } from "@/db/pool";
 import { authOptions } from "@/app/lib/auth";
+
+/**
+ * 🛠️ Helper para geração de chaves simétricas baseadas em SHA-256
+ * Padrão corporativo de mercado: prefixo identificável + hash estável de 40 caracteres
+ */
+function generateSecureShaToken(): string {
+  const rawBytes = randomBytes(32).toString("hex");
+  const shaHash = createHash("sha256").update(rawBytes).digest("hex");
+  return `isy_live_${shaHash.substring(0, 40)}`;
+}
 
 // 🔍 GET: Busca os tokens do usuário ou gera o primeiro se a lista estiver vazia
 export async function GET(req: NextRequest) {
@@ -20,14 +30,15 @@ export async function GET(req: NextRequest) {
 
     // Busca os tokens desse usuário no Postgres
     const { rows } = await db.query(
-      "SELECT * FROM isy_tokens WHERE user_email = $1",
+      "SELECT * FROM isy_tokens WHERE user_email = $1 ORDER BY created_at DESC",
       [email],
     );
 
     // Se o cara acabou de logar e não tem NENHUM token, vamos gerar o primeiro automaticamente
     if (rows.length === 0) {
-      // Usando UUID v4 nativo padrão para o token inicial
-      const tokenMestreInicial = "isy_live_init_" + randomUUID();
+      // Compilando hash SHA-256 de auditoria para o token mestre inicial
+      const tokenMestreInicial = generateSecureShaToken();
+      
       const insertQuery = await db.query(
         "INSERT INTO isy_tokens (name, token, user_email) VALUES ($1, $2, $3) RETURNING *",
         ["Token Inicial Autogerado", tokenMestreInicial, email],
@@ -58,8 +69,8 @@ export async function POST(req: NextRequest) {
 
     const email = session.user.email;
 
-    // Gera um UUID seguro padrão para os novos tokens gerados pelo painel
-    const novoHash = "isy_live_" + randomUUID();
+    // Injetando hash seguro SHA-256 na pipeline para novos tokens gerados pelo painel
+    const novoHashCriptografico = generateSecureShaToken();
 
     const { name } = await req.json();
 
@@ -74,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     const { rows } = await db.query(
       "INSERT INTO isy_tokens (name, token, user_email) VALUES ($1, $2, $3) RETURNING *",
-      [nomeToken, novoHash, email],
+      [nomeToken, novoHashCriptografico, email],
     );
 
     return NextResponse.json({ success: true, data: rows[0] });

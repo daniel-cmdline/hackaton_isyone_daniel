@@ -17,11 +17,11 @@ export function FrontPage() {
             ⚡
           </span>
           <h1 className="text-3xl font-extrabold text-zinc-100 font-mono tracking-tighter bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-            Isyone Ops Central
+            Isy.one FMU Hackathon 2026
           </h1>
           <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-zinc-700 to-transparent mx-auto my-4" />
           <p className="text-zinc-400 text-sm leading-relaxed max-w-md mx-auto">
-            Ambiente restrito de automação e orquestração. Autenticação segura via Single Sign-On é obrigatória.
+            Ambiente restrito de automação e orquestração de bash scripts. Autenticação segura Sign in Google obrigatória.
           </p>
         </div>
 
