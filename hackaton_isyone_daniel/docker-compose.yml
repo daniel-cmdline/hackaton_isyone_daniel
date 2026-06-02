@@ -13,7 +13,6 @@ services:
     volumes:
       - .pgdata:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
-    # 🏥 HEALTHCHECK: Testa se o Postgres está aceitando conexões de verdade antes de liberar o app
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 3s
@@ -35,9 +34,11 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    # 🔌 A MÁGICA ESTÁ AQUI: O Compose pega tudo do .env, mas força o host a ser 'db' dentro do container
+    environment:
+      - POSTGRES_HOST=db
     volumes:
       - ./scripts:/app/scripts
-    # 🔐 SINCRO-BLINDAGEM: O app só dá o boot quando a condição do healthcheck do db for "healthy"
     depends_on:
       db:
         condition: service_healthy

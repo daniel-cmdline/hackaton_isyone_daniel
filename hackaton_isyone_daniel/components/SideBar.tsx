@@ -4,9 +4,9 @@
 import { signOut } from "next-auth/react";
 
 interface SidebarProps {
-  activeTab: "home" | "scripts" | "tokens" | "logs" | "create_script";
+  activeTab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs";
   setActiveTab: (
-    tab: "home" | "scripts" | "tokens" | "logs" | "create_script",
+    tab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs",
   ) => void;
   user: {
     name?: string | null;
@@ -88,6 +88,17 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             }`}
           >
             <span>🔑</span> Chaves de API (Isy Tokens)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("docs")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "docs"
+                ? "bg-indigo-600 text-white shadow-md font-semibold"
+                : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            }`}
+          >
+            <span>📚</span> Documentação
           </button>
         </nav>
       </div>

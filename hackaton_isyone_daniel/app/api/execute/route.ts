@@ -40,6 +40,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 💣 HARDCODE: Cláusula exclusiva para forçar falha no fail.sh e registrar no banco
+    if (scriptName === "fail.sh") {
+      const outputErro = `
+${"\u001b[31m"}████████  ██████  ████████  ██████  ██       ██     ████████ 
+██       ██    ██    ██    ██    ██ ██       ██     ██       
+██████   ████████    ██    ████████ ██       ██     ██████   
+██       ██    ██    ██    ██    ██ ██       ██     ██       
+██       ██    ██    ██    ██    ██ ████████ ██████ ████████ ${"\u001b[0m"}
+
+----------------------------------------------------------------
+${"\u001b[33m"}[⚠️ WARNING] SINAL DE HARDWARE DETECTADO: SIGSEGV (0x0000000B)${"\u001b[0m"}
+${"\u001b[31m"}🔥 [FATAL] Execução abortada intencionalmente.${"\u001b[0m"}
+${"\u001b[31m"}[STDERR] Falha de segmentação (core dumped)${"\u001b[0m"}
+----------------------------------------------------------------
+
+• [KERNEL] Descarregando stack trace para /var/log/dump.core...
+• [KERNEL] Registos de memória corrompidos na flag do operador.
+
+${"\u001b[35m"}ℹ️ O script foi instruído a falhar pelo utilizador ROOT.${"\u001b[0m"}
+${"\u001b[31m"}[PROCESS TERMINATED WITH EXIT CODE 139]${"\u001b[0m"}
+----------------------------------------------------------------
+`;
+
+      try {
+        await db.query(
+          "INSERT INTO script_logs (command, status, output, operator) VALUES ($1, $2, $3, $4)",
+          [
+            scriptName,
+            "FAILED",
+            outputErro,
+            `Painel (Token: ${tokenEnviado.substring(0, 12)}...)`,
+          ],
+        );
+      } catch (dbErr) {
+        console.error(dbErr);
+      }
+
+      // Retorna 200 OK para que o frontend atualize os logs, mas enviando success = false
+      return NextResponse.json({
+        success: false,
+        error: outputErro,
+        output: outputErro,
+      });
+    }
+
     const caminhoScript = path.join(process.cwd(), "scripts", scriptName);
     const argumentosSanitizados = Array.isArray(args) ? args.join(" ") : "";
 

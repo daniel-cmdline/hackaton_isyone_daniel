@@ -114,11 +114,30 @@ export function ScriptsTab({
                   <div className="flex items-center justify-between mb-3 select-none">
                     <p className="font-mono text-xs font-bold flex items-center gap-2 text-zinc-300 group-hover:text-emerald-400 transition-colors tracking-tight">
                       {/* LED piscando */}
-                      <span className="flex h-1.5 w-1.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                      <span className="relative flex h-2 w-2">
+                        {/* 1. O efeito de ping (onda pulsante) também muda de cor dependendo do script */}
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${script.file === "testao.sh" ? "bg-rose-400" : "bg-emerald-400"}`}
+                        ></span>
+
+                        {/* 2. A bolinha central muda de cor e de sombra (glow) dinamicamente */}
+                        <span
+                          className={`relative inline-flex rounded-full h-2 w-2 ${
+                            script.file === "fail.sh"
+                              ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"
+                              : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                          }`}
+                        ></span>
                       </span>
-                      {script.file}
+                      <span
+                        className={
+                          script.file === "testao.sh"
+                            ? "text-rose-400 font-semibold"
+                            : ""
+                        }
+                      >
+                        {script.file}
+                      </span>
                     </p>
                     <span className="text-[9px] font-mono text-zinc-600 group-hover:text-emerald-400/80 transition-colors border border-zinc-900 group-hover:border-emerald-500/20 px-2 py-0.5 rounded-md bg-zinc-900/50 tracking-widest font-bold">
                       BASH
@@ -128,11 +147,14 @@ export function ScriptsTab({
                     {script.desc}
                   </p>
                 </div>
-                
+
                 {/* Metadados de Autoria (Rodapé interno do Card) */}
                 <div className="mb-4 text-[9px] font-mono text-zinc-500 flex items-center justify-between border-t border-zinc-800/60 pt-2.5 group-hover:border-emerald-500/20 transition-colors">
                   <span className="uppercase tracking-widest">Author</span>
-                  <span className="text-zinc-400 group-hover:text-emerald-400/80 transition-colors truncate max-w-[150px]" title={script.author}>
+                  <span
+                    className="text-zinc-400 group-hover:text-emerald-400/80 transition-colors truncate max-w-[150px]"
+                    title={script.author}
+                  >
                     {script.author}
                   </span>
                 </div>

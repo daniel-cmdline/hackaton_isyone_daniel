@@ -10,11 +10,12 @@ import { LogsTab } from "@/components/LogsTab";
 import { CreateScriptTab } from "@/components/CreateScriptTab";
 import { FrontPage } from "@/components/FrontPage";
 import { WelcomeCard } from "@/components/Home";
+import { DocsTab } from "@/components/DocsTab";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<
-    "home" | "scripts" | "tokens" | "logs" | "create_script"
+    "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs"
   >("home");
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
@@ -223,6 +224,8 @@ export default function Home() {
         </div>
 
         {activeTab === "home" && <WelcomeCard />}
+
+        {activeTab === "docs" && <DocsTab />}
 
         {activeTab === "scripts" && (
           <ScriptsTab

@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { AuthProvider } from "@/components/AuthProvider";
+import { HackerRadio } from "@/components/HackerRadio"; // 🟢 Importa o player aqui
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,6 +29,11 @@ export default function RootLayout({
                   Isyone{" "}
                   <span className="text-zinc-500 font-normal">/ Hackathon</span>
                 </span>
+              </div>
+
+              {/* 📻 INJEÇÃO DA RÁDIO: Fica perfeitamente no canto direito do Header */}
+              <div className="flex items-center">
+                <HackerRadio />
               </div>
             </div>
           </header>
