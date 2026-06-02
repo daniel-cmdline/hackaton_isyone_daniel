@@ -22,7 +22,7 @@ const DEFAULT_METADATA: Record<string, string> = {
     "Gera um dump completo e compactado do banco de dados PostgreSQL ativo.",
   "check_disk.sh":
     "Verifica o uso e o espaço disponível nas partições de disco do sistema.",
-    "check_processes.sh": "Lista os 10 processos mais consumidores de CPU e memória no momento.",
+    "check_processes.sh": "Lista os 10 prveriocessos mais consumidores de CPU e memória no momento.",
 };  
 
 export async function GET(req: NextRequest) {
@@ -41,7 +41,11 @@ export async function GET(req: NextRequest) {
       "SELECT filename, description, created_by FROM isy_scripts",
     );
 
+    console.log("Metadados dos scripts obtidos do banco:", dbScripts);
+
     const scriptsDir = path.join(process.cwd(), "scripts");
+
+    console.log("Diretório de scripts:", scriptsDir);
     let files: string[] = [];
 
     if (fs.existsSync(scriptsDir)) {
@@ -49,16 +53,15 @@ export async function GET(req: NextRequest) {
     }
 
     const shFiles = files.filter((file) => file.endsWith(".sh"));
+    console.log("Scripts .sh encontrados:", shFiles);
 
     const scripts = shFiles.map((file) => {
       const scriptMeta = dbScripts.find((s) => s.filename === file);
+      console.log(`Metadados para ${file}:`, scriptMeta);
 
-      // Se o banco trouxer a string genérica gravada de uma versão anterior,
-      // nós a anulamos para forçar a leitura do dicionário DEFAULT_METADATA.
+      // Se o banco trouxer a string genérica gravada de uma versão, boa
+      // senao nós a anulamos para forçar a leitura do dicionário DEFAULT_METADATA.
       let dbDesc = scriptMeta?.description;
-      if (dbDesc === "Script executável a nível de Sistema Operacional.") {
-        dbDesc = undefined;
-      }
 
       return {
         file,

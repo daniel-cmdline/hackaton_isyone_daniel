@@ -3,11 +3,11 @@
 
 export function DocsTab() {
   return (
-    <div className="space-y-6 font-mono selection:bg-fuchsia-500/30">
+    <div className="space-y-6 font-mono selection:bg-zinc-500/30">
       {/* CABEÇALHO DO MÓDULO */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-2 border-fuchsia-500 pl-4 py-1 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-2 border-zinc-500 pl-4 py-1 mb-8">
         <div>
-          <div className="text-[10px] text-fuchsia-400 font-bold tracking-widest uppercase mb-1">
+          <div className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase mb-1">
             [ MODULE // SYSTEM_DOCUMENTATION ]
           </div>
           <h2 className="text-xl font-extrabold text-zinc-100 tracking-tight">
@@ -35,7 +35,7 @@ export function DocsTab() {
 
         <DocSection title="Isy Tokens (/api/tokens)" icon="🔑">
           Os IsyTokens são gerados na rota{" "}
-          <code className="text-fuchsia-400">api/tokens</code> usando verbo HTTP
+          <code className="text-zinc-300">api/tokens</code> usando verbo HTTP
           GET e POST.
           <br />
           <br />A função <code>getServerSession</code> é importada diretamente
@@ -63,13 +63,12 @@ export function DocsTab() {
           Chamada via POST contendo o token no header. Verificamos a validade da
           chave na DB antes da execução.
           <br />
-          <br />O script (ex:{" "}
-          <code className="text-fuchsia-400">limpar.sh</code>) é recebido pelo
-          body, sanitizado contra Path Traversal, e executado assincronamente
-          pelo método <code>exec</code> nativo do Node. O <code>stdout</code> é
-          capturado, logado no banco de dados com <i>status</i>, e retornado
-          integralmente para ser exibido em tempo real no Live Terminal da
-          interface.
+          <br />O script (ex: <code className="text-zinc-300">limpar.sh</code>)
+          é recebido pelo body, sanitizado contra Path Traversal, e executado
+          assincronamente pelo método <code>exec</code> nativo do Node. O{" "}
+          <code>stdout</code> é capturado, logado no banco de dados com{" "}
+          <i>status</i>, e retornado integralmente para ser exibido em tempo
+          real no Live Terminal da interface.
         </DocSection>
 
         <DocSection title="Criação de Scripts (/api/create_script)" icon="🛠️">
@@ -104,12 +103,12 @@ function DocSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="p-6 bg-zinc-950/40 backdrop-blur-md border border-zinc-800/80 rounded-2xl shadow-xl flex flex-col group hover:border-fuchsia-500/40 transition-all duration-300">
+    <div className="p-6 bg-zinc-950/40 backdrop-blur-md border border-zinc-800/80 rounded-2xl shadow-xl flex flex-col group hover:border-zinc-500/40 transition-all duration-300">
       <div className="flex items-center gap-4 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-xl shadow-inner group-hover:border-fuchsia-500/50 group-hover:bg-fuchsia-500/10 transition-colors">
+        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-xl shadow-inner group-hover:border-zinc-500/50 group-hover:bg-zinc-500/10 transition-colors">
           {icon}
         </div>
-        <h3 className="text-lg font-bold text-zinc-100 font-mono tracking-tight group-hover:text-fuchsia-400 transition-colors">
+        <h3 className="text-lg font-bold text-zinc-100 font-mono tracking-tight group-hover:text-zinc-300 transition-colors">
           {title}
         </h3>
       </div>

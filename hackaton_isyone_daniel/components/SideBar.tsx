@@ -4,9 +4,27 @@
 import { signOut } from "next-auth/react";
 
 interface SidebarProps {
-  activeTab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic" | "about";
+  activeTab:
+    | "home"
+    | "scripts"
+    | "tokens"
+    | "logs"
+    | "create_script"
+    | "docs"
+    | "webhook"
+    | "panic"
+    | "about";
   setActiveTab: (
-    tab: "home" | "scripts" | "tokens" | "logs" | "create_script" | "docs" | "webhook" | "panic" | "about",
+    tab:
+      | "home"
+      | "scripts"
+      | "tokens"
+      | "logs"
+      | "create_script"
+      | "docs"
+      | "webhook"
+      | "panic"
+      | "about",
   ) => void;
   user: {
     name?: string | null;
@@ -45,11 +63,14 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "home"
                 ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                : "border-transparent text-zinc-500 hover:text-emerald-400 hover:bg-emerald-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "home" ? "➔" : "▪"}</span> [01] SYS_OVERVIEW
+              <span className="text-[10px]">
+                {activeTab === "home" ? "➔" : "▪"}
+              </span>{" "}
+              [01] SYS_OVERVIEW
             </span>
             <span className="text-[9px] text-zinc-700 font-normal">SYS_OK</span>
           </button>
@@ -58,26 +79,34 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             onClick={() => setActiveTab("scripts")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "scripts"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-cyan-950/20 border-cyan-500/30 text-cyan-400 font-bold shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "border-transparent text-zinc-500 hover:text-cyan-400 hover:bg-cyan-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "scripts" ? "➔" : "▪"}</span> [02] EXEC_MATRIX
+              <span className="text-[10px]">
+                {activeTab === "scripts" ? "➔" : "▪"}
+              </span>{" "}
+              [02] EXEC_MATRIX
             </span>
-            <span className="text-[9px] text-zinc-700 font-normal">SH_EXEC</span>
+            <span className="text-[9px] text-zinc-700 font-normal">
+              SH_EXEC
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab("create_script")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "create_script"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-orange-950/20 border-orange-500/30 text-orange-400 font-bold shadow-[0_0_10px_rgba(249,115,22,0.15)]"
+                : "border-transparent text-zinc-500 hover:text-orange-400 hover:bg-orange-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "create_script" ? "➔" : "▪"}</span> [03] COMPILE_NODE
+              <span className="text-[10px]">
+                {activeTab === "create_script" ? "➔" : "▪"}
+              </span>{" "}
+              [03] COMPILE_NODE
             </span>
             <span className="text-[9px] text-zinc-700 font-normal">WRITE</span>
           </button>
@@ -86,12 +115,15 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             onClick={() => setActiveTab("logs")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "logs"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-purple-950/20 border-purple-500/30 text-purple-400 font-bold shadow-[0_0_10px_rgba(168,85,247,0.15)]"
+                : "border-transparent text-zinc-500 hover:text-purple-400 hover:bg-purple-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "logs" ? "➔" : "▪"}</span> [04] KERNEL_AUDIT
+              <span className="text-[10px]">
+                {activeTab === "logs" ? "➔" : "▪"}
+              </span>{" "}
+              [04] KERNEL_AUDIT
             </span>
             <span className="text-[9px] text-zinc-700 font-normal">STDOUT</span>
           </button>
@@ -100,26 +132,34 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             onClick={() => setActiveTab("webhook")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "webhook"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-indigo-950/20 border-indigo-500/30 text-indigo-400 font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+                : "border-transparent text-zinc-500 hover:text-indigo-400 hover:bg-indigo-950/10 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "webhook" ? "➔" : "▪"}</span> [05] WEBHOOK_TUNNEL
+              <span className="text-[10px]">
+                {activeTab === "webhook" ? "➔" : "▪"}
+              </span>{" "}
+              [05] WEBHOOK_TUNNEL
             </span>
-            <span className="text-[9px] text-zinc-700 font-normal">DISCORD</span>
+            <span className="text-[9px] text-zinc-700 font-normal">
+              DISCORD
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab("tokens")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "tokens"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-amber-950/20 border-amber-500/30 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+                : "border-transparent text-zinc-500 hover:text-amber-400 hover:bg-amber-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "tokens" ? "➔" : "▪"}</span> [06] AUTH_KEYPAD
+              <span className="text-[10px]">
+                {activeTab === "tokens" ? "➔" : "▪"}
+              </span>{" "}
+              [06] AUTH_KEYPAD
             </span>
             <span className="text-[9px] text-zinc-700 font-normal">TOKENS</span>
           </button>
@@ -128,12 +168,15 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             onClick={() => setActiveTab("docs")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "docs"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-zinc-900/50 border-zinc-500/30 text-zinc-300 font-bold shadow-[0_0_10px_rgba(161,161,170,0.1)]"
+                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "docs" ? "➔" : "▪"}</span> [07] BLACK_BOOK
+              <span className="text-[10px]">
+                {activeTab === "docs" ? "➔" : "▪"}
+              </span>{" "}
+              [07] BLACK_BOOK
             </span>
             <span className="text-[9px] text-zinc-700 font-normal">MAN_8</span>
           </button>
@@ -147,9 +190,14 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "panic" ? "☣" : "▪"}</span> [08] PANIC_TRIGGER
+              <span className="text-[10px]">
+                {activeTab === "panic" ? "☣" : "▪"}
+              </span>{" "}
+              [08] PANIC_TRIGGER
             </span>
-            <span className="text-[9px] text-red-950 font-bold bg-red-500/10 border border-red-500/20 px-1 rounded">CRIT_0</span>
+            <span className="text-[9px] text-red-950 font-bold bg-red-500/10 border border-red-500/20 px-1 rounded">
+              CRIT_0
+            </span>
           </button>
 
           {/* 💻 MÁGICA CONCLUÍDA: ABA [09] COMPACTADA COM SUCESSO AQUI */}
@@ -157,27 +205,34 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
             onClick={() => setActiveTab("about")}
             className={`w-full flex items-center justify-between px-2 py-2 text-xs font-mono transition-all border ${
               activeTab === "about"
-                ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                ? "bg-cyan-950/20 border-cyan-500/30 text-cyan-400 font-bold shadow-[0_0_10px_rgba(6,182,212,0.15)]"
+                : "border-transparent text-zinc-500 hover:text-cyan-400 hover:bg-cyan-950/10"
             }`}
           >
             <span className="flex items-center gap-2">
-              <span className="text-[10px]">{activeTab === "about" ? "➔" : "▪"}</span> [09] SYS_ADM_ROOT
+              <span className="text-[10px]">
+                {activeTab === "about" ? "➔" : "▪"}
+              </span>{" "}
+              [09] SYS_ADM_ROOT
             </span>
-            <span className="text-[9px] text-zinc-700 font-normal">ROOT_OP</span>
+            <span className="text-[9px] text-zinc-700 font-normal">
+              ROOT_OP
+            </span>
           </button>
         </nav>
 
         {/* Live Network Decoupling */}
         <div className="border border-zinc-900 bg-zinc-950 p-2.5 space-y-1.5">
-          <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest leading-none">:: NET_METRIC</p>
+          <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest leading-none">
+            :: NET_METRIC
+          </p>
           <div className="flex justify-between items-center text-[10px]">
             <span className="text-zinc-500">GATEWAY_TUNNEL:</span>
             <span className="text-emerald-500/80 font-bold">ACTIVE</span>
           </div>
           <div className="flex justify-between items-center text-[10px]">
             <span className="text-zinc-500">LOCAL_PORT:</span>
-            <span className="text-zinc-400">5432//3000</span>
+            <span className="text-zinc-400">EZ//1</span>
           </div>
         </div>
       </div>
@@ -190,9 +245,13 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
           </div>
           <div className="overflow-hidden leading-none">
             <p className="text-[11px] font-bold text-zinc-300 truncate">
-              {user.name ? `OP_${user.name.toUpperCase().replace(/\s+/g, '_')}` : "OP_DANIEL"}
+              {user.name
+                ? `OP_${user.name.toUpperCase().replace(/\s+/g, "_")}`
+                : "OP_DANIEL"}
             </p>
-            <p className="text-[9px] text-zinc-600 truncate mt-1 font-sans">{user.email || "daniel.caesar@admin.node"}</p>
+            <p className="text-[9px] text-zinc-600 truncate mt-1 font-sans">
+              {user.email || "daniel.caesar@admin.node"}
+            </p>
           </div>
         </div>
         <button
