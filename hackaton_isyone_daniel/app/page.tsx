@@ -13,7 +13,7 @@ import { WelcomeCard } from "@/components/Home";
 import { DocsTab } from "@/components/DocsTab";
 import { WebhookTab } from "@/components/WebhookTab";
 import { PanicTab } from "@/components/PanicTab";
-import {AboutTab} from "@/components/AboutTab";
+import { AboutTab } from "@/components/AboutTab";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -69,6 +69,11 @@ export default function Home() {
   const dispararScript = async (scriptName: string) => {
     if (!tokenAtivo) return;
     setLoading(true);
+
+    // Feedback imediato no terminal antes mesmo da rede responder
+    const feedbackInicial = `> INJECTING PAYLOAD: ${scriptName}\n> AUTH_HEADER: X-Isy-Token = ${tokenAtivo.substring(0, 12)}********\n> DISPATCHING TO KERNEL...\n------------------------------------------------------\n`;
+    setOutput(feedbackInicial + `\n⏳ Aguardando retorno de stdout...\n`);
+
     try {
       const res = await fetch("/api/execute", {
         method: "POST",
@@ -83,13 +88,19 @@ export default function Home() {
       });
       if (!res.ok) {
         setLoading(false);
+        setOutput(
+          feedbackInicial +
+            `[ERRO HTTP] Falha na comunicação com o servidor (Status: ${res.status})`,
+        );
         return;
       }
       const data = await res.json();
-      setOutput(data.success ? data.output : `[ERRO] ${data.error}`);
+      setOutput(
+        feedbackInicial + (data.success ? data.output : `[ERRO] ${data.error}`),
+      );
       carregarLogs();
     } catch (err: any) {
-      setOutput(`[ERRO] ${err.message}`);
+      setOutput(feedbackInicial + `[ERRO DE REDE] ${err.message}`);
     } finally {
       setLoading(false);
     }

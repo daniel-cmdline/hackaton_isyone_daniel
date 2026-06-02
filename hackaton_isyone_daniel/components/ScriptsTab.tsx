@@ -185,7 +185,7 @@ export function ScriptsTab({
       </div>
 
       {/* TERMINAL OUTPUT */}
-      <LiveTerminal output={output} />
+      <LiveTerminal output={output} tokenAtivo={tokenAtivo} />
     </div>
   );
 }
