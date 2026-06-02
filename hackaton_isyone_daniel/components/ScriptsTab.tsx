@@ -7,6 +7,7 @@ import { LiveTerminal } from "./Terminal";
 interface ScriptData {
   file: string;
   desc: string;
+  author?: string;
 }
 
 interface ScriptsTabProps {
@@ -34,6 +35,7 @@ export function ScriptsTab({
         headers: {
           "X-Isy-Token": tokenAtivo,
         },
+        cache: "no-store",
       });
       const data = await res.json();
       if (data.success) setScriptsList(data.data);
@@ -125,6 +127,14 @@ export function ScriptsTab({
                   <p className="text-xs text-zinc-400 leading-relaxed font-sans group-hover:text-zinc-300 transition-colors flex items-start gap-1.5 pl-3.5 border-l border-zinc-900 group-hover:border-emerald-500/20">
                     {script.desc}
                   </p>
+                </div>
+                
+                {/* Metadados de Autoria (Rodapé interno do Card) */}
+                <div className="mb-4 text-[9px] font-mono text-zinc-500 flex items-center justify-between border-t border-zinc-800/60 pt-2.5 group-hover:border-emerald-500/20 transition-colors">
+                  <span className="uppercase tracking-widest">Author</span>
+                  <span className="text-zinc-400 group-hover:text-emerald-400/80 transition-colors truncate max-w-[150px]" title={script.author}>
+                    {script.author}
+                  </span>
                 </div>
 
                 <button

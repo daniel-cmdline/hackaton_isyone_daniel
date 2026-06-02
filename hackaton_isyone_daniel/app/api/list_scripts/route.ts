@@ -4,6 +4,27 @@ import fs from "fs";
 import path from "path";
 import { db } from "@/db/pool";
 
+export const dynamic = "force-dynamic";
+
+// Dicionário de fallback para os scripts nativos caso o banco tenha sido resetado
+const DEFAULT_METADATA: Record<string, string> = {
+  "check_ip.sh":
+    "Retorna o endereço IP público (IPv4) da instância via ifconfig.co.",
+  "check_dns.sh":
+    "Inspeciona a configuração de rede para mapear os servidores DNS em uso.",
+  "port_scanner.sh":
+    "Realiza uma varredura rápida de portas TCP ativas no localhost.",
+  "sys_audit.sh":
+    "Auditoria de SO: Kernel, uptime, arquitetura e carga média da CPU.",
+  "flush_ram.sh":
+    "Força a liberação do cache de memória RAM (PageCache, dentries e inodes).",
+  "backup_postgres.sh":
+    "Gera um dump completo e compactado do banco de dados PostgreSQL ativo.",
+  "check_disk.sh":
+    "Verifica o uso e o espaço disponível nas partições de disco do sistema.",
+    "check_processes.sh": "Lista os 10 processos mais consumidores de CPU e memória no momento.",
+};  
+
 export async function GET(req: NextRequest) {
   try {
     const tokenEnviado = req.headers.get("X-Isy-Token");
@@ -16,7 +37,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Busca os metadados dos scripts diretamente do banco de dados
-    const { rows: dbScripts } = await db.query("SELECT filename, description, created_by FROM isy_scripts");
+    const { rows: dbScripts } = await db.query(
+      "SELECT filename, description, created_by FROM isy_scripts",
+    );
 
     const scriptsDir = path.join(process.cwd(), "scripts");
     let files: string[] = [];
@@ -29,11 +52,21 @@ export async function GET(req: NextRequest) {
 
     const scripts = shFiles.map((file) => {
       const scriptMeta = dbScripts.find((s) => s.filename === file);
+
+      // Se o banco trouxer a string genérica gravada de uma versão anterior,
+      // nós a anulamos para forçar a leitura do dicionário DEFAULT_METADATA.
+      let dbDesc = scriptMeta?.description;
+      if (dbDesc === "Script executável a nível de Sistema Operacional.") {
+        dbDesc = undefined;
+      }
+
       return {
         file,
         desc:
-          scriptMeta?.description ||
+          dbDesc ||
+          DEFAULT_METADATA[file] ||
           "Script executável a nível de Sistema Operacional.",
+        author: scriptMeta?.created_by || "SYS_ADMIN",
       };
     });
 

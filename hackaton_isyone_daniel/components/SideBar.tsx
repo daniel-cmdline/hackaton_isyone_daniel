@@ -43,7 +43,7 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
                 : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
             }`}
           >
-            <span>🏠</span> Visão Geral
+            <span>👁️</span> Visão Geral
           </button>
 
           <button

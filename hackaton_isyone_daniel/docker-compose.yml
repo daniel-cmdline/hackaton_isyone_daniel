@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # -------------------------------------------------------------
   # SERVIÇO 1: BANCO DE DADOS (POSTGRESQL)
@@ -8,7 +6,6 @@ services:
     image: postgres:15-alpine
     container_name: hackaton_postgres
     restart: always
-    # 🔌 Injeta as variáveis de banco declaradas no seu .env local
     env_file:
       - .env
     ports:
@@ -16,6 +13,12 @@ services:
     volumes:
       - .pgdata:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
+    # 🏥 HEALTHCHECK: Testa se o Postgres está aceitando conexões de verdade antes de liberar o app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
     networks:
       - isy-network
 
@@ -30,14 +33,14 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    # 🔌 Repassa o .env para o Next.js ler o POSTGRES_HOST e os Secrets do NextAuth
     env_file:
       - .env
     volumes:
-      # Mapeamento exigido pela banca para ler os scripts do host
       - ./scripts:/app/scripts
+    # 🔐 SINCRO-BLINDAGEM: O app só dá o boot quando a condição do healthcheck do db for "healthy"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - isy-network
 
