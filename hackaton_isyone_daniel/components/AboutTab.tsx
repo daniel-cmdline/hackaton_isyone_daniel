@@ -63,7 +63,7 @@ export function AboutTab() {
             </p>
             <div className="flex flex-col gap-1.5 pt-1">
               <a
-                href="https://github.com/daniel-cmdline" // ➔ Mete teu link real aqui
+                href="https://github.com/daniel-cmdline/hackaton_isyone_daniel" // ➔ Mete teu link real aqui
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] border border-zinc-900 bg-black hover:border-cyan-500/40 p-2 text-center text-zinc-500 hover:text-cyan-400 hover:bg-cyan-950/5 transition-all duration-150 rounded-lg font-bold"
