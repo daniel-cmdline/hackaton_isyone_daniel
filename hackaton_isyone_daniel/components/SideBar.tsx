@@ -1,6 +1,7 @@
 // src/components/Sidebar.tsx
 "use client";
 
+import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 
 interface SidebarProps {
@@ -33,9 +34,23 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
+  const [catFrame, setCatFrame] = useState(0);
+
+  // Efeito de animação: o gatinho muda de frame a cada 2.5 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCatFrame((prev) => (prev === 0 ? 1 : 0));
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Frames da Arte ASCII
+  const catAscii1 = `  /\\_/\\ \n ( o.o ) <(SYS_OK)\n  > ^ < `;
+  const catAscii2 = `  /\\_/\\ \n ( -.- ) <(Zzz...)\n  > ^ < `;
+
   return (
-    <aside className="w-64 bg-black border-r border-zinc-900 flex flex-col justify-between p-4 select-none font-mono min-h-screen">
-      <div className="space-y-6">
+    <aside className="w-64 bg-black border-r border-zinc-900 flex flex-col p-4 select-none font-mono min-h-screen">
+      <div className="space-y-6 flex flex-col">
         {/* Brand / Core Identity */}
         <div className="flex items-center gap-3 border-b border-zinc-900 pb-4">
           <div className="relative flex h-2 w-2">
@@ -221,6 +236,26 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
           </button>
         </nav>
 
+        {/* Daemon Cat Hacker Art */}
+        <div className="opacity-70 hover:opacity-100 transition-opacity duration-300 pt-2">
+          <div className="border border-emerald-900/30 bg-emerald-950/10 p-3 rounded-lg relative overflow-hidden group">
+            {/* Efeito de Scanlines de fundo */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
+
+            <p className="text-[9px] text-emerald-500/50 uppercase font-bold mb-2 tracking-widest flex justify-between">
+              <span>// NEKO_DAEMON</span>
+              <span className="text-emerald-500 animate-ping">.</span>
+            </p>
+            <pre className="text-emerald-400 font-mono text-[10px] leading-tight font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.8)] transition-all">
+              {catFrame === 0 ? catAscii1 : catAscii2}
+            </pre>
+            <div className="mt-3 flex items-center justify-between text-[8px] text-emerald-600 font-bold tracking-widest">
+              <span className="animate-pulse">STATUS: LURKING</span>
+              <span>PID: 1337</span>
+            </div>
+          </div>
+        </div>
+
         {/* Live Network Decoupling */}
         <div className="border border-zinc-900 bg-zinc-950 p-2.5 space-y-1.5">
           <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest leading-none">
@@ -238,7 +273,7 @@ export function Sidebar({ activeTab, setActiveTab, user }: SidebarProps) {
       </div>
 
       {/* Operator Metadata Frame */}
-      <div className="border-t border-zinc-900 pt-3 flex flex-col gap-2.5">
+      <div className="border-t border-zinc-900 pt-4 mt-6 flex flex-col gap-2.5">
         <div className="bg-zinc-950 border border-zinc-900 p-2 flex items-center gap-2.5">
           <div className="w-7 h-7 bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-emerald-400 text-xs">
             {user.name?.charAt(0) || "D"}
