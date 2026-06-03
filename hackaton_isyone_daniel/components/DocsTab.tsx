@@ -22,71 +22,79 @@ export function DocsTab() {
 
       {/* CARDS DE DOCUMENTAÇÃO */}
       <div className="grid grid-cols-1 gap-6 pb-6 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-        <DocSection title="Autenticação via NextAuth Google Provider" icon="🔐">
-          Uma arquitetura de verificação de identidade usando NextAuth com o
-          Google Provider via protocolo OAuth2. Foi criado uma rota dinâmica
-          "coringa" no Next.js que intercepta o fluxo de autenticação. Quando o
-          usuário se autentica com sucesso no Google, a configuração captura o
-          e-mail dele. Esse e-mail se torna a nossa chave de auditoria: toda vez
-          que esse usuário criar um script ou gerar um Isy Token, o nosso
-          backend usa essa sessão segura para carimbar o e-mail dele no
-          Postgres, gerando um histórico de logs à prova de fraudes.
+        <DocSection title="Infraestrutura e Docker" icon="🐳">
+          A infraestrutura do Isyone sobe de forma orquestrada via Docker. O
+          banco de dados <strong>PostgreSQL</strong> é inicializado e injetamos
+          automaticamente um script <code>init.sql</code> que cria todas as
+          tabelas (sessões, logs, scripts e tokens) no primeiro boot.
+          <br />
+          <br />
+          Já a engine principal roda num container <strong>
+            Node Alpine
+          </strong>{" "}
+          super leve, que executa o Next.js na porta <code>3000</code>. Essa
+          arquitetura garante isolamento e resiliência na hora de executar os
+          scripts no ambiente do SO.
+        </DocSection>
+
+        <DocSection title="Autenticação e Segurança" icon="🔐">
+          O login é feito via Google OAuth2 (NextAuth). O e-mail do usuário
+          logado se torna a "chave mestra" no banco de dados. Tudo o que o
+          operador fizer no sistema (como injetar scripts ou gerar tokens)
+          ficará carimbado com sua identidade de forma inforjável, garantindo um
+          ambiente à prova de fraudes.
         </DocSection>
 
         <DocSection title="Isy Tokens (/api/tokens)" icon="🔑">
-          Os IsyTokens são gerados na rota{" "}
-          <code className="text-zinc-300">api/tokens</code> usando verbo HTTP
-          GET e POST.
+          Gerencia as credenciais de acesso da plataforma (GET, POST, DELETE).
+          Os tokens criptografados em hash SHA-256 (que começam com{" "}
+          <code>isy_live_...</code>) não nascem sozinhos: o usuário precisa
+          gerá-los ativamente.
           <br />
-          <br />A função <code>getServerSession</code> é importada diretamente
-          do núcleo do NextAuth e valida os cookies da requisição no servidor,
-          usando a chave <code>NEXTAUTH_SECRET</code> para descriptografar. Se
-          logado, buscamos os tokens desse usuário na DB.
-          <br />
-          <br />
-          Seguindo o princípio de{" "}
-          <strong>Privilégio Mínimo (Implicit Deny)</strong>, se o usuário não
-          possuir tokens no momento do acesso, o sistema não criará nenhum
-          automaticamente. O usuário deverá gerar chaves ativamente pelo painel.
+          <br />A API cruza a sessão atual (autenticada via NextAuth) com o
+          banco de dados para garantir que apenas o dono manipule e enxergue
+          suas próprias chaves.
         </DocSection>
 
         <DocSection title="Listagem de Scripts (/api/list_scripts)" icon="📂">
-          Após validarmos o <code>X-Isy-Token</code> enviado via frontend,
-          buscamos os metadados na DB (nome, descrição e autor da tabela{" "}
-          <code>isy_scripts</code>). O backend então lê a pasta{" "}
-          <code>scripts/</code> via <code>fs.readdirSync</code> e cruza os
-          arquivos físicos com os dados da DB. Se houver um arquivo solto não
-          mapeado, ele ganha uma descrição genérica para a interface não
-          quebrar.
+          Cruza o mundo físico com o banco de dados. A rota lê os arquivos
+          físicos <code>.sh</code> da pasta <code>/scripts</code> dentro do
+          container Alpine e faz o <i>match</i> com seus metadados (descrição
+          amigável, autoria) vindos da tabela <code>isy_scripts</code>. O
+          resultado é um array consolidado entregue ao Frontend para gerar os
+          Cards de execução.
         </DocSection>
 
-        <DocSection title="Execução de Scripts (/api/execute)" icon="⚡">
-          Chamada via POST contendo o token no header. Verificamos a validade da
-          chave na DB antes da execução.
+        <DocSection title="Execução de Payloads (/api/execute)" icon="⚡">
+          O coração do sistema. O frontend envia o nome do script a ser rodado e
+          o token no Header. O backend atesta a validade da chave e usa o módulo
+          nativo do Node (<code>exec</code>) para rodar o script no SO do
+          container Alpine.
           <br />
-          <br />O script (ex: <code className="text-zinc-300">limpar.sh</code>)
-          é recebido pelo body, sanitizado contra Path Traversal, e executado
-          assincronamente pelo método <code>exec</code> nativo do Node. O{" "}
-          <code>stdout</code> é capturado, logado no banco de dados com{" "}
-          <i>status</i>, e retornado integralmente para ser exibido em tempo
-          real no Live Terminal da interface.
+          <br />A mágica da auditoria acontece exatamente aqui:{" "}
+          <strong>
+            essa própria rota já se encarrega de registrar o comando, o autor e
+            a saída final na tabela de logs da base de dados
+          </strong>
+          , antes de devolver o resultado para ser impresso no Terminal da
+          interface.
         </DocSection>
 
         <DocSection title="Criação de Scripts (/api/create_script)" icon="🛠️">
-          A API recebe o nome, descrição e conteúdo via POST. Primeiramente,
-          atestamos quem é o criador usando o Token da sessão. Checamos se o
-          arquivo já não pertence a outro usuário (evitando sobrescrita
-          indevida). O payload é salvo em disco usando permissões Linux{" "}
-          <code>chmod +x (0o755)</code> via <code>fs.writeFileSync</code>. Por
-          fim, os metadados são inseridos na DB.
+          Injeta novos payloads no sistema. O backend recebe o código Bash
+          digitado na tela, salva o arquivo físico <code>.sh</code> no servidor
+          concedendo permissão nativa de execução (<code>chmod +x</code>) e
+          registra os metadados no banco, garantindo a rastreabilidade de quem o
+          criou.
         </DocSection>
 
-        <DocSection title="Logs e Auditoria (/api/logs)" icon="🛡️">
-          Após o check de segurança pelo Header do Isy-Token, efetuamos um{" "}
-          <code>SELECT</code> simples ordenado por data na tabela{" "}
-          <code>script_logs</code>. Os dados alimentam um mecanismo de "polling"
-          reativo no Frontend, garantindo que o Histórico de Auditoria esteja
-          sempre atualizado em tempo real.
+        <DocSection title="Auditoria de Logs (/api/logs)" icon="🛡️">
+          Como os logs de auditoria já são salvos automaticamente no momento em
+          que um script roda (via <code>/api/execute</code>), esta rota possui
+          apenas a responsabilidade de leitura. Ela executa um{" "}
+          <code>SELECT</code> ordenado por data trazendo a verdade absoluta do
+          banco. O Frontend não precisa fazer <i>polling</i> constante; os dados
+          são apenas requisitados de forma limpa.
         </DocSection>
       </div>
     </div>
