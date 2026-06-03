@@ -12,6 +12,7 @@ export function PanicTab({ tokenAtivo, onNukeComplete }: PanicTabProps) {
   const [isAborting, setIsAborting] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [glitchText, setGlitchText] = useState("CORE_PURGE");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!isAborting) return;
@@ -23,6 +24,12 @@ export function PanicTab({ tokenAtivo, onNukeComplete }: PanicTabProps) {
   }, [isAborting]);
 
   const handlePanicTrigger = async () => {
+    if (!tokenAtivo) {
+      setErrorMsg("ACESSO NEGADO // TOKEN AUSENTE. Gere uma chave em [06] AUTH_KEYPAD.");
+      return;
+    }
+
+    setErrorMsg("");
     setIsAborting(true);
     
     // Bipes rápidos e agressivos de aviso
@@ -107,6 +114,11 @@ export function PanicTab({ tokenAtivo, onNukeComplete }: PanicTabProps) {
 
         {!isAborting ? (
           <div className="flex flex-col items-center justify-center text-center space-y-6 relative z-10 w-full">
+            {errorMsg && (
+              <div className="text-[10px] text-red-400 font-bold uppercase tracking-widest bg-red-950/40 border border-red-900 px-4 py-2 rounded shadow-[0_0_15px_rgba(220,38,38,0.2)] animate-pulse">
+                {errorMsg}
+              </div>
+            )}
             <div className="p-3 bg-red-950/20 border border-red-900/30 rounded-full animate-[pulse_2s_infinite]">
               <button
                 onClick={handlePanicTrigger}
